@@ -293,7 +293,7 @@ def get_all(n):
             else:
                 for k in files:
                     if k.startswith('fit'):
-                        f=hdfs_get_file(filepath,k,"./",delete=delete)
+                        f=hdfs_get_file(filepath,k,"./",delete=True)
                         tmp=np.load(f)
                         #print("tmp:",tmp)
                         os.remove(f)
@@ -310,50 +310,6 @@ def get_all(n):
     
     return wait_hdfs_files('/shared/work/',delete=True)
                             
-    #             if filename in files:
-    #                 file_path=filepath+filename
-    #                 f=hdfs_get_file(filepath,filename,"./",delete)
-    #                 flag=False
-    #             else:
-    #                 time.sleep(1)
-    #     print('The waited file has been retrived to local machine!')
-    #     return f
-
-    # count=0
-    # res=[]
-    # X=[]
-    # while count<3:
-    #     files=os.listdir(work_path)
-    #     if files==[]:
-    #         print("waiting for results")
-    #     else:
-    #         for k in files:
-    #             if k not in ['fit1.npy','fit2.npy','fit3.npy']:
-    #                 continue
-    #             else:
-    #                 #print("receive one result part.")
-    #                 filepath=work_path+'/'+k
-    #                 tmp=np.load(filepath)
-    #                 #print('tmp',tmp)
-    #                 tmp_x=tmp[0]
-    #                 tmp_fit=tmp[1]
-    #                 # print("tmp_x",tmp_x)
-    #                 # print("tmp_y",tmp_fit)
-    #                 for i in range(len(tmp_fit)):
-    #                     res.append(tmp_fit[i])
-    #                     X.append(tmp_x[i])
-                    
-    #                 #print('X',X)
-    #                 #time.sleep(5)
-    #                 count+=1
-    #                 os.remove(filepath)
-    #         time.sleep(5)
-    # # for x in X[:3]:
-    # #     print(x)
-    # #print("res",res[:3])
-    # return np.array([X,res])
-
-
 
 def set_solutions(solutions):
     '''
