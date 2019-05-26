@@ -486,31 +486,48 @@ while True:
     waiting for "ncs_start.txt" file to start work.
     when one loop is over,create a "fitness_over.txt" file in work path.
     '''
-    files=os.listdir(work_path)
-    if files == []:
-        #print("NCSLoop is sleeping!")
-        time.sleep(10)
-        continue
-    else:
-        for k in files:
-          if k!='ncs_start.txt':
-            #print("Outloop checking the File name.")
-            continue
-          else:
-            filepath=work_path+"/"+k
-            with open(filepath,'r') as f:
-                msg=f.read()
-                if msg=='exit':
-                    with open(work_path+'/fitness_over.txt','w') as ff:
-                        ff.write('exit')
-                    exit()
-                msg=eval(msg)
-                tmp_crates=msg[0]
-                tmp_ind=msg[1]
-                tmp_accuracy_=np.load(work_path+'/accuracy.npy')
-            NCSloop(tmp_crates,tmp_ind,tmp_accuracy_)
-            print("NCSloop is completed!")
-            os.remove(filepath)
-            with open(work_path+'/ncs_over.txt','w') as f:
-                f.write('complete!')
-        time.sleep(5)
+    f=wait_hdfs_file('/shared/work/','ncs_start.txt',delete=False)
+    with open(f,'r') as ff:
+      msg=ff.read()
+      if msg=='exit':
+        exit()
+      else:
+        msg=eval(msg)
+        tmp_crates=msg[0]
+        tmp_ind=msg[1]
+        tmp_accuracy_=hdfs_load('/shared/work/','accuracy.npy')
+      NCSloop(tmp_crates,tmp_ind,tmp_accuracy_)
+      print("NCSloop is completed!")
+      os.remove(f)
+      with open('ncs_over.txt','w') as ff:
+        ff.write('complete!')
+      hdfs_set_file('./','/shared/work/','ncs_over.txt')
+      
+    # files=os.listdir(work_path)
+    # if files == []:
+    #     #print("NCSLoop is sleeping!")
+    #     time.sleep(10)
+    #     continue
+    # else:
+    #     for k in files:
+    #       if k!='ncs_start.txt':
+    #         #print("Outloop checking the File name.")
+    #         continue
+    #       else:
+    #         filepath=work_path+"/"+k
+    #         with open(filepath,'r') as f:
+    #             msg=f.read()
+    #             if msg=='exit':
+    #                 with open(work_path+'/fitness_over.txt','w') as ff:
+    #                     ff.write('exit')
+    #                 exit()
+    #             msg=eval(msg)
+    #             tmp_crates=msg[0]
+    #             tmp_ind=msg[1]
+    #             tmp_accuracy_=np.load(work_path+'/accuracy.npy')
+    #         NCSloop(tmp_crates,tmp_ind,tmp_accuracy_)
+    #         print("NCSloop is completed!")
+    #         os.remove(filepath)
+    #         with open(work_path+'/ncs_over.txt','w') as f:
+    #             f.write('complete!')
+    #     time.sleep(5)
