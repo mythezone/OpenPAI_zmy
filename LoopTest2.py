@@ -293,16 +293,16 @@ def get_all(n):
             else:
                 for k in files:
                     if k.startswith('fit'):
-                        f=hdfs_get_file(filepath,k,"./",delete=False)
+                        f=hdfs_get_file(filepath,k,"./",delete=delete)
                         tmp=np.load(f)
-                        print("tmp:",tmp)
+                        #print("tmp:",tmp)
                         os.remove(f)
                         tmp_x=tmp[0]
                         tmp_fit=tmp[1]
                         res.append(tmp_fit)
                         X.append(tmp_x)
-                        print('res',res)
-                        print("X",X)
+                        #print('res',res)
+                        #print("X",X)
                         count-=1
                         if count==0:
                             print("all the results recevied!")
