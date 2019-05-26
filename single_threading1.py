@@ -248,7 +248,9 @@ def single_evaluate(the_input,x,batchcount,acc):
     #thenet = caffe.Net(origin_proto_name, caffe.TEST)
     # thenet.copy_from(parallel_file_name)
     s = caffe.SGDSolver(solver_path)
-    s.net.copy_from(parallel_file_name)
+    fi=hdfs_get_file('/shared/work/',parallel_file_name,'./')
+    print("model getted,prepare for calculating.")
+    s.net.copy_from(fi)
     thenet=s.net
     #print("shape of thenet, the_input", thenet.blobs['data'].data.shape, the_input.value.shape)
     thenet.blobs['data'].data[:] = the_input

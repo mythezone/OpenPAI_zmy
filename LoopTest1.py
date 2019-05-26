@@ -172,6 +172,7 @@ def outer_loop(itr=1001):
           
           #solver.net.save(work_path+'/tmp.caffemodel')
           solver.net.save(parallel_file_name)
+          hdfs_set_file('./','/shared/work/',parallel_file_name)
           data=solver.net.blobs['data'].data
           #print("max",np.max(data))
           hdfs_save('/shared/work/','data.npy',data)
