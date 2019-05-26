@@ -299,8 +299,8 @@ def get_all(n):
                         os.remove(f)
                         tmp_x=tmp[0]
                         tmp_fit=tmp[1]
-                        res+=tmp_fit
-                        X+=tmp_x
+                        res.append(tmp_fit)
+                        X.append(tmp_x)
                         count-=1
             if count==0:
                 return np.array([X,res])
