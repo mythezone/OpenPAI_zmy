@@ -199,6 +199,7 @@ def evaluate(the_input, x_set, batchcount=1, accuracy_ontrain=0.9988):
    accuracy_ontrain: the accuracy.
    return : [array of solutions,array of fitnesses]
    '''
+   print('evaluating!')
    fitness=[]
    X=[]
    # distributed evaluation by spark
@@ -230,13 +231,38 @@ def evaluate(the_input, x_set, batchcount=1, accuracy_ontrain=0.9988):
    def merge_results(a, b):
      return (a[0]+b[0], a[1]+b[1])
    res=[]
+   
    for s in x_set:
-       res.append(single_eval(s))
+       k=single_eval(s)
+       print("the result of ",s,"is",k)
+       res.append(k)
 
    #final_results = sc.parallelize(x_set).map(single_eval).reduce(merge_results)
    #print('individual num:', len(x_set))
    #print(final_results)
    return (x_set,res)
+
+def single_evaluate(the_input,x,batchcount,acc):
+    
+    x_fit = 1.1
+    #thenet = caffe.Net(origin_proto_name, caffe.TEST)
+    # thenet.copy_from(parallel_file_name)
+    s = caffe.SGDSolver(solver_path)
+    s.net.copy_from(parallel_file_name)
+    thenet=s.net
+    #print("shape of thenet, the_input", thenet.blobs['data'].data.shape, the_input.value.shape)
+    thenet.blobs['data'].data[:] = the_input
+    #print("difference:", (thenet.blobs['data'].data - the_input.value).mean())
+    apply_prune(thenet,x)
+    #acc = test_net(thenet, _start='ip1', _count=batchcount)
+    acc = test_net(thenet,  _count=batchcount)
+    #print(the_input.value.shape)
+    #acc = thenet.forward(data=the_input.value).blobs['accuracy'].data
+    if acc >= acc - acc_constrain:
+      x_fit = get_sparsity(thenet)
+    #print('accuracy_ontrain, acc',accuracy_ontrain, acc)
+    print("evaluating completed!")
+    return x_fit
 
 
 
@@ -254,14 +280,17 @@ while True:
     for f in files:
       if f.startswith('solution'):
         print("get a solution,calculating...")
-        ff=hdfs_load('/shared/work/',f,delete=True)
+        ff=hdfs_load('/shared/work/',f,delete=False)
         hdfs_client.delete('/shared/work/'+f)
-        fit=evaluate(the_input_batch,ff,1,accuracy)
+        fit=single_evaluate(the_input_batch,ff,1,accuracy)
         fn='fit'+f
-        np.save(fn,np.array(fit))
+
+        np.save(fn,np.array([ff,fit]))
         hdfs_set_file('./','/shared/work/',fn)
         os.remove(fn)
-        print("OK,fitness has been setted.")
+        hdfs_client.delete('/shared/work/'+f)
+        print("OK,fitness has been setted.  waiting for the next evaluation.")
+        
 
 
     # f=wait_hdfs_file('/shared/work/','solutions1.npy',delete=True)
