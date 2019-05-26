@@ -192,58 +192,57 @@ def get_sparsity(thenet):
 
 #  evaluate the accuracy of a network with a set of crates respect to a original accuracy
 #  thenet is the broadcasted reference model
-def evaluate(the_input, x_set, batchcount=1, accuracy_ontrain=0.9988):
-   '''
-   the_input:training data
-   x_set:the solutions
-   accuracy_ontrain: the accuracy.
-   return : [array of solutions,array of fitnesses]
-   '''
-   print('evaluating!')
-   fitness=[]
-   X=[]
-   # distributed evaluation by spark
-   def single_eval(x):
-     import sys
-     sys.path.insert(0, './python/')
-     import os
-     os.environ['GLOG_minloglevel'] = '2'
-     import caffe
-     x_fit = 1.1
-     #thenet = caffe.Net(origin_proto_name, caffe.TEST)
-     # thenet.copy_from(parallel_file_name)
-     s = caffe.SGDSolver(solver_path)
-     s.net.copy_from(parallel_file_name)
-     thenet=s.net
-     #print("shape of thenet, the_input", thenet.blobs['data'].data.shape, the_input.value.shape)
-     thenet.blobs['data'].data[:] = the_input
-     #print("difference:", (thenet.blobs['data'].data - the_input.value).mean())
-     apply_prune(thenet,x)
-     #acc = test_net(thenet, _start='ip1', _count=batchcount)
-     acc = test_net(thenet,  _count=batchcount)
-     #print(the_input.value.shape)
-     #acc = thenet.forward(data=the_input.value).blobs['accuracy'].data
-     if acc >= accuracy_ontrain - acc_constrain:
-       x_fit = get_sparsity(thenet)
-     #print('accuracy_ontrain, acc',accuracy_ontrain, acc)
-     return ([x], [x_fit])
+# def evaluate(the_input, x_set, batchcount=1, accuracy_ontrain=0.9988):
+#    '''
+#    the_input:training data
+#    x_set:the solutions
+#    accuracy_ontrain: the accuracy.
+#    return : [array of solutions,array of fitnesses]
+#    '''
+#    print('evaluating!')
+#    fitness=[]
+#    X=[]
+#    # distributed evaluation by spark
+#    def single_eval(x):
+#      import sys
+#      sys.path.insert(0, './python/')
+#      import os
+#      os.environ['GLOG_minloglevel'] = '2'
+#      import caffe
+#      x_fit = 1.1
+#      #thenet = caffe.Net(origin_proto_name, caffe.TEST)
+#      # thenet.copy_from(parallel_file_name)
+#      s = caffe.SGDSolver(solver_path)
+#      s.net.copy_from(parallel_file_name)
+#      thenet=s.net
+#      #print("shape of thenet, the_input", thenet.blobs['data'].data.shape, the_input.value.shape)
+#      thenet.blobs['data'].data[:] = the_input
+#      #print("difference:", (thenet.blobs['data'].data - the_input.value).mean())
+#      apply_prune(thenet,x)
+#      #acc = test_net(thenet, _start='ip1', _count=batchcount)
+#      acc = test_net(thenet,  _count=batchcount)
+#      #print(the_input.value.shape)
+#      #acc = thenet.forward(data=the_input.value).blobs['accuracy'].data
+#      if acc >= accuracy_ontrain - acc_constrain:
+#        x_fit = get_sparsity(thenet)
+#      #print('accuracy_ontrain, acc',accuracy_ontrain, acc)
+#      return ([x], [x_fit])
 
-   def merge_results(a, b):
-     return (a[0]+b[0], a[1]+b[1])
-   res=[]
+#    def merge_results(a, b):
+#      return (a[0]+b[0], a[1]+b[1])
+#    res=[]
    
-   for s in x_set:
-       k=single_eval(s)
-       print("the result of ",s,"is",k)
-       res.append(k)
+#    for s in x_set:
+#        k=single_eval(s)
+#        print("the result of ",s,"is",k)
+#        res.append(k)
 
-   #final_results = sc.parallelize(x_set).map(single_eval).reduce(merge_results)
-   #print('individual num:', len(x_set))
-   #print(final_results)
-   return (x_set,res)
+#    #final_results = sc.parallelize(x_set).map(single_eval).reduce(merge_results)
+#    #print('individual num:', len(x_set))
+#    #print(final_results)
+#    return (x_set,res)
 
 def single_evaluate(the_input,x,batchcount,acc):
-    
     x_fit = 1.1
     #thenet = caffe.Net(origin_proto_name, caffe.TEST)
     # thenet.copy_from(parallel_file_name)
