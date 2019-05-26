@@ -102,8 +102,8 @@ niter = 30001
 work_path='/shared/work/'
 #hdfs_init_fold(work_path)
 count=0
-set_work()
 hdfs_init_fold(work_path)
+set_work()
 #------end of init-------#
 
 
