@@ -69,6 +69,16 @@ def hdfs_init_fold(remote_path,hdfs_path="10.20.37.175",port=9000):
         hdfs_client.delete(remote_path+k)
       return
 
+def hdfs_init_total(remote_path,hdfs_path="10.20.37.175",port=9000):
+    hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
+    try:
+      files=hdfs_client.listdir(remote_path)
+      for k in files:
+        hdfs_client.delete(remote_path+k)
+      hdfs_client.delete(remote_path)
+    except:
+      return
+
 def set_work(itr=0,tmax=30001,remote_path='/shared/work/'):
     '''
     set the "new_iter.txt" file.
@@ -98,30 +108,7 @@ If the number is larger than niter,the program will exit.
 print("Main.py is runing!")
 
 #-------init-------------#
-niter = 30001
-work_path='/shared/work/'
-#hdfs_init_fold(work_path)
-count=0
-set_work()
-hdfs_init_fold(work_path)
-#------end of init-------#
-
-
-flag=True
-while flag:
-    '''
-    Set "new_iter.txt" to start the outloop.
-    Scanning for "report.txt" to decide continue or exit.
-    '''
-    f=wait_hdfs_file('/shared/work/','report.txt',delete=True)
-    with open(f,'r') as ff:
-      msg=ff.read()
-      #os.remove(f)
-      count+=eval(msg)
-      set_work(count)
-      if count>niter:
-        print("Program is over!Waiting for exit!")
-        flag=False
-    time.sleep(1)    
+#hdfs_init_fold('/shared/work/')
+hdfs_init_total('/shared/work/')
 
 #--------------------------end of main------------------------------#
