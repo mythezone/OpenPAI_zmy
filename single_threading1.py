@@ -235,6 +235,7 @@ while True:
       if f.startswith('solution'):
         print("get a solution,calculating...version:2")
         ff=hdfs_load('/shared/work/',f,delete=False)
+        print("ff",ff)
         #hdfs_client.delete('/shared/work/'+f)
         #fit=single_evaluate(the_input_batch,ff,1,accuracy)
 
