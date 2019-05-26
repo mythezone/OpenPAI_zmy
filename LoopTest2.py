@@ -269,7 +269,7 @@ def get_sparsity(thenet):
 #     #                 return tmp_fit
 #     #         time.sleep(5)
 
-def get_all():
+def get_all(n):
     '''
     This function will get all the result in "fitX.npy",and stack them in a array.
     The result file will be deleted after read.
@@ -278,10 +278,10 @@ def get_all():
     :return: [array_of_solutions,array_of_fits]
     '''
 
-    def wait_hdfs_files(filepath,filenames,delete=False,hdfs_path="10.20.37.175",port=9000):
+    def wait_hdfs_files(filepath,delete=False,hdfs_path="10.20.37.175",port=9000):
         flag=True
         hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
-        count=len(filenames)
+        count=n
         res=[]
         X=[]
 
@@ -292,9 +292,11 @@ def get_all():
                 continue
             else:
                 for k in files:
-                    if k in filenames:
+                    if k.startswith('fit'):
                         f=hdfs_get_file(filepath,k,"./",delete=True)
                         tmp=np.load(f)
+                        print("tmp:",tmp)
+                        os.remove(f)
                         tmp_x=tmp[0]
                         tmp_fit=tmp[1]
                         res+=tmp_fit
@@ -303,7 +305,7 @@ def get_all():
             if count==0:
                 return np.array([X,res])
     
-    return wait_hdfs_files('/shared/work/',['fit1.npy','fit2.npy','fit3.npy'],delete=True)
+    return wait_hdfs_files('/shared/work/',delete=True)
                             
     #             if filename in files:
     #                 file_path=filepath+filename
@@ -431,7 +433,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
             tmp_x_[layer_inds[tmp_ind[_ii]]] = tmp_input_x[_ii]
 
         set_solutions([tmp_x_])
-        _,tmp_fit = get_all()
+        _,tmp_fit = get_all(len(tmp_x_))
         #_,tmp_fit = evaluate(the_input_batch, [tmp_x_], 1, accuracy_)
         #set_solutions([tmp_x_])
         # print([tmp_x_])
