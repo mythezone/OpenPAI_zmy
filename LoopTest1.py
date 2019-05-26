@@ -5,13 +5,13 @@ import sys
 sys.path.insert(0, './python/')
 import caffe
 import numpy as np
-from lcg_random import lcg_rand
+#from lcg_random import lcg_rand
 import ncs
-from easydict import EasyDict as edict
+#from easydict import EasyDict as edict
 import time
 import pdb
-from pyspark.context import SparkContext
-import socket
+#from pyspark.context import SparkContext
+#import socket
 
 
 #------------------------------hdfs functions------------------------------#
@@ -311,30 +311,3 @@ while flag:
 
     outer_loop(1001)
     hdfs_set_file('./','/shared/work/','report.txt',delete=False)
-
-    # files=os.listdir(work_path)
-    # if files == []:
-    #     #print("subloop is sleeping!")
-    #     time.sleep(5)
-    #     continue
-    # else:
-    #     for k in files:
-    #       if k!='new_itr.txt':
-    #         #print("checking the File name.")
-    #         continue
-    #       else:
-    #         filepath=work_path+"/"+k
-    #         with open(filepath,'r') as f:
-    #             msg=f.read()
-    #             if msg=='over':
-    #               with open(work_path+'/ncs_start.txt','w') as ff:
-    #                 ff.write("exit")
-    #               exit()
-    #             else:
-    #               itr=eval(msg)
-    #         print("Go through the NCS loop")
-    #         outer_loop()
-    #         os.remove(filepath)
-    #         with open(work_path+'/report.txt','w') as f:
-    #             f.write('1000')
-    #     time.sleep(10)
