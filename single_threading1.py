@@ -247,7 +247,10 @@ def single_evaluate(the_input,x,batchcount,acc):
     x_fit = 1.1
     #thenet = caffe.Net(origin_proto_name, caffe.TEST)
     # thenet.copy_from(parallel_file_name)
+    files=os.listdir('./models/lenet300100')
+    print("files",files)
     s = caffe.SGDSolver(solver_path)
+    print("S loaded.")
     fi=hdfs_get_file('/shared/work/',parallel_file_name,'./')
     print("model getted,prepare for calculating.")
     s.net.copy_from(fi)
