@@ -243,7 +243,7 @@ def get_sparsity(thenet):
 #    return (x_set,res)
 
 def single_evaluate(the_input,x,batchcount,acc):
-    print("In the single_evaluation function!")
+    print("In the single_evaluation function!Version: 2.0")
     x_fit = 1.1
     #thenet = caffe.Net(origin_proto_name, caffe.TEST)
     # thenet.copy_from(parallel_file_name)
@@ -284,10 +284,12 @@ while True:
     files=hdfs_client.listdir('/shared/work/')
     for f in files:
       if f.startswith('solution'):
-        print("get a solution,calculating...")
+        print("get a solution,calculating...version:2")
         ff=hdfs_load('/shared/work/',f,delete=False)
         #hdfs_client.delete('/shared/work/'+f)
-        fit=single_evaluate(the_input_batch,ff,1,accuracy)
+        #fit=single_evaluate(the_input_batch,ff,1,accuracy)
+
+        fit=np.random.uniform(0,1)
         fn='fit'+f
 
         np.save(fn,np.array([ff,fit]))
