@@ -183,10 +183,10 @@ def outer_loop(itr=1001):
           hdfs_save('/shared/work/','accuracy.npy',accuracy_,delete=False)
           #np.save(work_path+'/accuracy.npy',accuracy_) #save accuracy in a file.
           msg='['+st1+','+st2+']' # message to send to LoopTest2.py.
-          with open(work_path+'/ncs_start.txt','w') as f:
+          with open('ncs_start.txt','w') as f:
                 f.write(msg)
 
-          hdfs_set_file(work_path,'/shared/work/','ncs_start.txt')
+          hdfs_set_file('./','/shared/work/','ncs_start.txt',delete=True)
 
           while True:
             #print("Waiting for NCSloop over")
