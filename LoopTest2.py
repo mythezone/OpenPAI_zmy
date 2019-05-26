@@ -102,8 +102,8 @@ es_method='ncs'
 origin_proto_name = './models/lenet300100/lenet_origin.prototxt'
 parallel_file_name = './tmp_model.caffemodel'
 # cpu/gpu
-caffe.set_mode_gpu()
-caffe.set_device(0)
+caffe.set_mode_cpu()
+#caffe.set_device(0)
 # init solver
 solver = caffe.SGDSolver(solver_path)
 # basic parameters
@@ -357,27 +357,35 @@ def set_solutions(solutions):
     :param solutions:
     :return:
     '''
-    #print(np.array(solutions).shape)
-    l=len(solutions)
-    p1=l//3
-    p2=l*2//3
-    s1=solutions[:p1]
-    s2=solutions[p1:p2]
-    s3=solutions[p2:]
-    #print(s1)
-    #print(s2)
-    #print(s3)
-    np.save(work_path+'/solutions1.npy',s1)
-    np.save(work_path+'/solutions2.npy',s2)
-    np.save(work_path+'/solutions3.npy',s3)
-    hdfs_set_file(work_path,'/shared/work/','solutions1.npy')
-    hdfs_set_file(work_path,'/shared/work/','solutions2.npy')
-    hdfs_set_file(work_path,'/shared/work/','solutions3.npy')
-    os.remove(work_path+'/solutions1.npy')
-    os.remove(work_path+'/solutions2.npy')
-    os.remove(work_path+'/solutions3.npy')
-    #np.save(work_path+'/accuracy.npy',accuracy)
-    print("files has been setted.")
+    # #print(np.array(solutions).shape)
+    # l=len(solutions)
+    # p1=l//3
+    # p2=l*2//3
+    # s1=solutions[:p1]
+    # s2=solutions[p1:p2]
+    # s3=solutions[p2:]
+    # #print(s1)
+    # #print(s2)
+    # #print(s3)
+    # np.save(work_path+'/solutions1.npy',s1)
+    # np.save(work_path+'/solutions2.npy',s2)
+    # np.save(work_path+'/solutions3.npy',s3)
+    # hdfs_set_file(work_path,'/shared/work/','solutions1.npy')
+    # hdfs_set_file(work_path,'/shared/work/','solutions2.npy')
+    # hdfs_set_file(work_path,'/shared/work/','solutions3.npy')
+    # os.remove(work_path+'/solutions1.npy')
+    # os.remove(work_path+'/solutions2.npy')
+    # os.remove(work_path+'/solutions3.npy')
+    # #np.save(work_path+'/accuracy.npy',accuracy)
+    # print("files has been setted.")
+    count=0
+    for solution in solutions:
+      fn='solution_'+str(count)+'.npy'
+      np.save(fn,solution)
+      hdfs_set_file('./','/shared/work/',fn)
+      os.remove(fn)
+      count+=1
+    print('All the solutions have been setted!')
 
 def NCSloop(tmp_crates,tmp_ind,accuracy_):
     '''
@@ -391,7 +399,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
     '''
     #thenet = caffe.Net(origin_proto_name, caffe.TEST)
     # solver.net.copy_from(work_path+'/tmp.caffemodel')
-    the_input_batch=np.load(work_path+'/data.npy')
+    the_input_batch=hdfs_load('/shared/work/','data.npy')
     # solver.net.blobs['data'].data[:]=the_input_batch[:]
     # print("max:",np.max(the_input_batch))
     # accuracy_ = test_net(solver.net, _count=1, _start="ip1")
