@@ -448,6 +448,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         print('***************NCS initialization***************')
     count=0
     while not es.stop():
+        print("now in the es loop.")
         count+=1
         #print("count",count)
         if count==15:
@@ -465,7 +466,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         #     print(i)
         # print(tmp.shape)
         set_solutions(X)
-        X_arrange,fit=get_all()
+        X_arrange,fit=get_all(len(X))
         #np.save(work_path+'/solutions.npy',X)
         #X_arrange,fit=get_fit('fitness.npy')
         #X_arrange,fit = evaluate(the_input_batch, X, 1, accuracy_)

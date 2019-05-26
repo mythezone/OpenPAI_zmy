@@ -136,7 +136,7 @@ es_cache = {}
 #retrieval_tag=[]
 r_count=0
 # load the pretrained caffe model
-work_path="./work"
+work_path="/shared/work/"
 
 if weights:
   solver.net.copy_from(weights)
@@ -253,6 +253,7 @@ while True:
     files=hdfs_client.listdir('/shared/work/')
     for f in files:
       if f.startswith('solution'):
+        print("get a solution,calculating...")
         ff=hdfs_load('/shared/work/',f,delete=True)
         hdfs_client.delete('/shared/work/'+f)
         fit=evaluate(the_input_batch,ff,1,accuracy)
@@ -260,6 +261,7 @@ while True:
         np.save(fn,np.array(fit))
         hdfs_set_file('./','/shared/work/',fn)
         os.remove(fn)
+        print("OK,fitness has been setted.")
 
 
     # f=wait_hdfs_file('/shared/work/','solutions1.npy',delete=True)
