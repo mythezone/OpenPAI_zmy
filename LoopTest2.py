@@ -3,7 +3,7 @@ import os
 os.environ['GLOG_minloglevel'] = '2'
 import sys
 sys.path.insert(0, './python/')
-import caffe
+#import caffe
 import numpy as np
 from lcg_random import lcg_rand
 import ncs
@@ -102,10 +102,10 @@ es_method='ncs'
 origin_proto_name = './models/lenet300100/lenet_origin.prototxt'
 parallel_file_name = './tmp_model.caffemodel'
 # cpu/gpu
-caffe.set_mode_cpu()
+#caffe.set_mode_cpu()
 #caffe.set_device(0)
 # init solver
-solver = caffe.SGDSolver(solver_path)
+#solver = caffe.SGDSolver(solver_path)
 # basic parameters
 #   accuracy constraint for pruning
 acc_constrain=0.08
@@ -135,7 +135,7 @@ np.random.seed([seed])
 es_cache = {}
 #retrieval_tag=[]
 r_count=0
-work_path="./work"
+work_path="/shared/work/"
 
 # print("NCSLoop is runing!")
 # sc=SparkContext()
@@ -191,83 +191,83 @@ def get_sparsity(thenet):
 
 #  evaluate the accuracy of a network with a set of crates respect to a original accuracy
 #  thenet is the broadcasted reference model
-def evaluate(the_input, x_set, batchcount=1, accuracy_ontrain=0.9988):
-   '''
-   the_input:training data
-   x_set:the solutions
-   accuracy_ontrain: the accuracy.
-   return : [array of solutions,array of fitnesses]
-   '''
-   fitness=[]
-   X=[]
-   # distributed evaluation by spark
-   def single_eval(x):
-     import sys
-     sys.path.insert(0, './python/')
-     import os
-     os.environ['GLOG_minloglevel'] = '2'
-     import caffe
-     x_fit = 1.1
-     #thenet = caffe.Net(origin_proto_name, caffe.TEST)
-     # thenet.copy_from(parallel_file_name)
-     s = caffe.SGDSolver(solver_path)
-     s.net.copy_from(parallel_file_name)
-     thenet=s.net
-     #print("shape of thenet, the_input", thenet.blobs['data'].data.shape, the_input.value.shape)
-     thenet.blobs['data'].data[:] = the_input
-     #print("difference:", (thenet.blobs['data'].data - the_input.value).mean())
-     apply_prune(thenet,x)
-     #acc = test_net(thenet, _start='ip1', _count=batchcount)
-     acc = test_net(thenet,  _count=batchcount)
-     #print(the_input.value.shape)
-     #acc = thenet.forward(data=the_input.value).blobs['accuracy'].data
-     if acc >= accuracy_ontrain - acc_constrain:
-       x_fit = get_sparsity(thenet)
-     #print('accuracy_ontrain, acc',accuracy_ontrain, acc)
-     return ([x], [x_fit])
+# def evaluate(the_input, x_set, batchcount=1, accuracy_ontrain=0.9988):
+#    '''
+#    the_input:training data
+#    x_set:the solutions
+#    accuracy_ontrain: the accuracy.
+#    return : [array of solutions,array of fitnesses]
+#    '''
+#    fitness=[]
+#    X=[]
+#    # distributed evaluation by spark
+#    def single_eval(x):
+#      import sys
+#      sys.path.insert(0, './python/')
+#      import os
+#      os.environ['GLOG_minloglevel'] = '2'
+#      import caffe
+#      x_fit = 1.1
+#      #thenet = caffe.Net(origin_proto_name, caffe.TEST)
+#      # thenet.copy_from(parallel_file_name)
+#      s = caffe.SGDSolver(solver_path)
+#      s.net.copy_from(parallel_file_name)
+#      thenet=s.net
+#      #print("shape of thenet, the_input", thenet.blobs['data'].data.shape, the_input.value.shape)
+#      thenet.blobs['data'].data[:] = the_input
+#      #print("difference:", (thenet.blobs['data'].data - the_input.value).mean())
+#      apply_prune(thenet,x)
+#      #acc = test_net(thenet, _start='ip1', _count=batchcount)
+#      acc = test_net(thenet,  _count=batchcount)
+#      #print(the_input.value.shape)
+#      #acc = thenet.forward(data=the_input.value).blobs['accuracy'].data
+#      if acc >= accuracy_ontrain - acc_constrain:
+#        x_fit = get_sparsity(thenet)
+#      #print('accuracy_ontrain, acc',accuracy_ontrain, acc)
+#      return ([x], [x_fit])
 
-   def merge_results(a, b):
-     return (a[0]+b[0], a[1]+b[1])
-   res=[]
-   for s in x_set:
-       res.append(single_eval(s))
+#    def merge_results(a, b):
+#      return (a[0]+b[0], a[1]+b[1])
+#    res=[]
+#    for s in x_set:
+#        res.append(single_eval(s))
 
-   #final_results = sc.parallelize(x_set).map(single_eval).reduce(merge_results)
-   #print('individual num:', len(x_set))
-   #print(final_results)
-   return (x_set,res)
+#    #final_results = sc.parallelize(x_set).map(single_eval).reduce(merge_results)
+#    #print('individual num:', len(x_set))
+#    #print(final_results)
+#    return (x_set,res)
 
 
-#NCS loop
-def get_fit(filename):
-    '''
-    here is the evaluation part.
-    the next work is staring here.
-    '''
-    # with open(work_path+'/solutions.txt','w') as f:
-    #     f.write(str(X))
-    f=wait_hdfs_file('/shared/work/',filename,delete=True)
-    tmp_fit=np.load(f)
-    os.remove(f)
-    return tmp_fit
-    # while True:
-    #     files=os.listdir(work_path)
-    #     if files == []:
-    #         #print("subloop is sleeping!")
-    #         time.sleep(5)
-    #         continue
-    #     else:
-    #         for k in files:
-    #             if k!=filename:
-    #                 print("checking the File name.")
-    #                 continue
-    #             else:
-    #                 print("Fitness has gotten!!")
-    #                 filepath=work_path+"/"+k
-    #                 tmp_fit=np.load(filepath)
-    #                 os.remove(filepath)
-    #                 return tmp_fit
-    #         time.sleep(5)
+# #NCS loop
+# def get_fit(filename):
+#     '''
+#     here is the evaluation part.
+#     the next work is staring here.
+#     '''
+#     # with open(work_path+'/solutions.txt','w') as f:
+#     #     f.write(str(X))
+#     f=wait_hdfs_file('/shared/work/',filename,delete=True)
+#     tmp_fit=np.load(f)
+#     os.remove(f)
+#     return tmp_fit
+#     # while True:
+#     #     files=os.listdir(work_path)
+#     #     if files == []:
+#     #         #print("subloop is sleeping!")
+#     #         time.sleep(5)
+#     #         continue
+#     #     else:
+#     #         for k in files:
+#     #             if k!=filename:
+#     #                 print("checking the File name.")
+#     #                 continue
+#     #             else:
+#     #                 print("Fitness has gotten!!")
+#     #                 filepath=work_path+"/"+k
+#     #                 tmp_fit=np.load(filepath)
+#     #                 os.remove(filepath)
+#     #                 return tmp_fit
+#     #         time.sleep(5)
 
 def get_all():
     '''
@@ -483,7 +483,9 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
     _tmp_c = np.array(len(crates_list)*[-1.])
     for t_name in tmp_ind:
         _tmp_c[layer_inds[t_name]] = crates[t_name]
-    np.save(work_path+'/crates_list.npy',crates_list)
+    np.save('crates_list.npy',crates_list)
+    hdfs_set_file('./','/shared/work/','crates_list.npy')
+    os.remove('crates_list.npy')
     # apply_prune(solver.net, crates_list)
 
 
@@ -510,32 +512,3 @@ while True:
       with open('ncs_over.txt','w') as ff:
         ff.write('complete!')
       hdfs_set_file('./','/shared/work/','ncs_over.txt')
-      
-    # files=os.listdir(work_path)
-    # if files == []:
-    #     #print("NCSLoop is sleeping!")
-    #     time.sleep(10)
-    #     continue
-    # else:
-    #     for k in files:
-    #       if k!='ncs_start.txt':
-    #         #print("Outloop checking the File name.")
-    #         continue
-    #       else:
-    #         filepath=work_path+"/"+k
-    #         with open(filepath,'r') as f:
-    #             msg=f.read()
-    #             if msg=='exit':
-    #                 with open(work_path+'/fitness_over.txt','w') as ff:
-    #                     ff.write('exit')
-    #                 exit()
-    #             msg=eval(msg)
-    #             tmp_crates=msg[0]
-    #             tmp_ind=msg[1]
-    #             tmp_accuracy_=np.load(work_path+'/accuracy.npy')
-    #         NCSloop(tmp_crates,tmp_ind,tmp_accuracy_)
-    #         print("NCSloop is completed!")
-    #         os.remove(filepath)
-    #         with open(work_path+'/ncs_over.txt','w') as f:
-    #             f.write('complete!')
-    #     time.sleep(5)

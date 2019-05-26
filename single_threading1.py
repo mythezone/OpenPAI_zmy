@@ -248,15 +248,28 @@ while True:
     '''
     this loop will wait for the solution file, and return [arrary of solutions,array of fitnesses] in a file.
     '''
-    files=os.listdir(work_path)
-    f=wait_hdfs_file('/shared/work/','solutions1.npy',delete=True)
-    X=np.load(f)
-    os.remove(f)
+    hdfs_client=pyhdfs.HdfsClient('10.20.37.175',9000)
     accuracy=hdfs_load('/shared/work/','accuracy.npy')
-    if len(X)==0:
-      np.save('./fit1.npy',[[],[]])
-    else:
-      fit=evaluate(the_input_batch,X,1,accuracy)
-      np.save('./fit1.npy',np.array(fit))
-    hdfs_set_file('./fit1.npy','/shared/work/','fit1.npy')
-    os.remove('./fit1.npy')
+    files=hdfs_client.listdir('/shared/work/')
+    for f in files:
+      if f.startswith('solution'):
+        ff=hdfs_load('/shared/work/',f,delete=True)
+        hdfs_client.delete('/shared/work/'+f)
+        fit=evaluate(the_input_batch,ff,1,accuracy)
+        fn='fit'+f
+        np.save(fn,np.array(fit))
+        hdfs_set_file('./','/shared/work/',fn)
+        os.remove(fn)
+
+
+    # f=wait_hdfs_file('/shared/work/','solutions1.npy',delete=True)
+    # X=np.load(f)
+    # os.remove(f)
+    # accuracy=hdfs_load('/shared/work/','accuracy.npy')
+    # if len(X)==0:
+    #   np.save('./fit1.npy',[[],[]])
+    # else:
+    #   fit=evaluate(the_input_batch,X,1,accuracy)
+    #   np.save('./fit1.npy',np.array(fit))
+    # hdfs_set_file('./fit1.npy','/shared/work/','fit1.npy')
+    # os.remove('./fit1.npy')
