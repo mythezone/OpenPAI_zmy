@@ -425,6 +425,8 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         print('***************NCS initialization***************')
         tmp_x_ = np.array(crates_list)
         tmp_input_x = tmp_crates
+        print(tmp_x_)
+        print(tmp_input_x)
         for _ii in range(len(tmp_ind)):
             tmp_x_[layer_inds[tmp_ind[_ii]]] = tmp_input_x[_ii]
 
