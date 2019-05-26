@@ -103,7 +103,7 @@ origin_proto_name = './models/lenet300100/lenet_origin.prototxt'
 parallel_file_name = './tmp_model.caffemodel'
 # cpu/gpu
 caffe.set_mode_gpu()
-caffe.set_device(1)
+caffe.set_device(0)
 # init solver
 solver = caffe.SGDSolver(solver_path)
 # basic parameters
