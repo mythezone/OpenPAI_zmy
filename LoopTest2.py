@@ -307,6 +307,7 @@ def get_all(n):
                         if count==0:
                             print("all the results recevied!")
                             return np.array([X,res])
+                        time.sleep(1)
     
     return wait_hdfs_files('/shared/work/',delete=True)
                             
