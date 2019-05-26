@@ -302,9 +302,9 @@ def get_all(n):
                         res.append(tmp_fit)
                         X.append(tmp_x)
                         count-=1
-            if count==0:
-                print("all the results recevied!")
-                return np.array([X,res])
+                        if count==0:
+                            print("all the results recevied!")
+                            return np.array([X,res])
     
     return wait_hdfs_files('/shared/work/',delete=True)
                             
