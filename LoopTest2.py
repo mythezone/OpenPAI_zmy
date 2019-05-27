@@ -120,8 +120,12 @@ def get_all(n):
                     #print('in the for loop.')
                     if k.startswith('fit'):
                         f=hdfs_get_file(filepath,k,"./",delete=True)
-                        tmp=np.load(f)
-                        time.sleep(1)
+                        try:
+                          tmp=np.load(f)
+                        except:
+                          time.sleep(3)
+                          tmp=np.load(f)
+                          
                         try:
                           os.remove(f)
                         except:
