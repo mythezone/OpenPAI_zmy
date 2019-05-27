@@ -119,17 +119,21 @@ def get_all(n):
                 for k in files:
                     #print('in the for loop.')
                     if k.startswith('fit'):
-                        f=hdfs_get_file(filepath,k,"./",delete=True)
                         try:
-                          tmp=np.load(f)
+                          tmp=hdfs_load('/shared/work/',k,delete=True)
                         except:
-                          time.sleep(3)
-                          tmp=np.load(f)
-                          
-                        try:
-                          os.remove(f)
-                        except:
-                          pass
+                          f=hdfs_get_file(filepath,k,"./",delete=True)
+                          try:
+                            tmp=np.load(f)
+                          except:
+                            print("something wrong is occred.")
+                            time.sleep(3)
+                            tmp=np.load(f)
+
+                          try:
+                            os.remove(f)
+                          except:
+                            pass
                         tmp_x=tmp[0]
                         tmp_fit=tmp[1]
                         res.append(tmp_fit)
