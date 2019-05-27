@@ -27,6 +27,7 @@ def hdfs_set_file(local_file_path,remote_file_path,filename,hdfs_path="10.20.37.
     if filename in files:
         try:
             hdfs_client.delete(remote_file_path+filename)
+            time.sleep(2)
         except:
             pass
     hdfs_client.copy_from_local(local_file_path+filename,remote_file_path+filename)
