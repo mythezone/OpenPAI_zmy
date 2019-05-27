@@ -224,27 +224,27 @@ def single_evaluate(the_input,x,batchcount,acc):
 time.sleep(5)
 the_input_batch= hdfs_load('/shared/work/','data.npy')
 #the_input_batch = np.load('work/data.npy')
+hdfs_client=pyhdfs.HdfsClient('10.20.37.175',9000)
 while True:
     '''
     this loop will wait for the solution file, and return [arrary of solutions,array of fitnesses] in a file.
     '''
-    hdfs_client=pyhdfs.HdfsClient('10.20.37.175',9000)
-    accuracy=hdfs_load('/shared/work/','accuracy.npy')
     files=hdfs_client.listdir('/shared/work/')
     for f in files:
       if f.startswith('solution'):
+        accuracy=hdfs_load('/shared/work/','accuracy.npy')
         print("get a solution,calculating...version:2")
         ff=hdfs_load('/shared/work/',f,delete=False)
         print("ff",ff)
         #hdfs_client.delete('/shared/work/'+f)
         #fit=single_evaluate(the_input_batch,ff,1,accuracy)
-
         fit=np.random.uniform(0,1)
-        fn='fit'+f
-
+        fn='fit_'+f
         np.save(fn,np.array([ff,fit]))
         print("npy file has been setted!")
         hdfs_set_file('./','/shared/work/',fn)
+        time.sleep(1)
         os.remove(fn)
         hdfs_client.delete('/shared/work/'+f)
         print("OK,fitness has been setted.  waiting for the next evaluation.")
+    time.sleep(1)
