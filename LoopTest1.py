@@ -184,4 +184,4 @@ while flag:
       ff.write('10001') #just for test,in real work this will be changed into '1001'
 
     outer_loop(1001)
-    hdfs_set_file('./','/shared/work/','report.txt',delete=False)
+    hdfs_set_file('./','/shared/work/','report.txt')
