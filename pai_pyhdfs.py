@@ -25,23 +25,35 @@ def hdfs_set_file(local_file_path,remote_file_path,filename,hdfs_path="10.20.37.
     hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
     files=hdfs_client.listdir(remote_file_path)
     if filename in files:
-        hdfs_client.delete(remote_file_path+filename)
+        try:
+            hdfs_client.delete(remote_file_path+filename)
+        except:
+            pass
     hdfs_client.copy_from_local(local_file_path+filename,remote_file_path+filename)
     print("set Completed!")
 
 def hdfs_get_file(remote_path,filename,local_path,delete=False,hdfs_path='10.20.37.175',port=9000):
     hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
-    hdfs_client.copy_to_local(remote_path+filename,local_path+filename)
+    try:
+        hdfs_client.copy_to_local(remote_path+filename,local_path+filename)
+    except:
+        time.sleep(2)
+        hdfs_client.copy_to_local(remote_path+filename,local_path+filename)
     print("load completed!")
     if delete:
-        time.sleep(1)
-        hdfs_client.delete(remote_path+filename)
+        try:
+            hdfs_client.delete(remote_path+filename)
+        except:
+            pass
     return local_path+filename
 
 def hdfs_load(remote_path,filename,local_path='./',delete=False):
     f=hdfs_get_file(remote_path,filename,local_path,delete)
     d=np.load(f)
-    os.remove(local_path+filename)
+    try:
+        os.remove(local_path+filename)
+    except:
+        pass
     return d
 
 def hdfs_save(remote_path,filename,arr,local_path='./',delete=False):
@@ -59,7 +71,10 @@ def hdfs_init_fold(remote_path,hdfs_path="10.20.37.175",port=9000):
       return
     else:
       for k in files:
-        hdfs_client.delete(remote_path+k)
+        try:
+            hdfs_client.delete(remote_path+k)
+        except:
+            pass
       return
 
 def set_work(itr=0,tmax=30001,remote_path='/shared/work/'):
