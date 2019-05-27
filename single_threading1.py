@@ -48,6 +48,7 @@ def hdfs_get_file(remote_path,filename,local_path,delete=False,hdfs_path='10.20.
     hdfs_client.copy_to_local(remote_path+filename,local_path+filename)
     print("load completed!")
     if delete:
+        time.sleep(1)
         hdfs_client.delete(remote_path+filename)
     return local_path+filename
 
@@ -234,7 +235,7 @@ while True:
       if f.startswith('solution'):
         accuracy=hdfs_load('/shared/work/','accuracy.npy')
         print("get a solution,calculating...version:2")
-        ff=hdfs_load('/shared/work/',f,delete=False)
+        ff=hdfs_load('/shared/work/',f,delete=True)
         print("ff",ff)
         #hdfs_client.delete('/shared/work/'+f)
         #fit=single_evaluate(the_input_batch,ff,1,accuracy)

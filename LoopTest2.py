@@ -198,7 +198,7 @@ def get_all(n):
     :return: [array_of_solutions,array_of_fits]
     '''
 
-    def wait_hdfs_files(filepath,delete=False,hdfs_path="10.20.37.175",port=9000):
+    def wait_hdfs_files(filepath,hdfs_path="10.20.37.175",port=9000):
         flag=True
         hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
         count=n
@@ -215,9 +215,10 @@ def get_all(n):
                     #print('in the for loop.')
                     if k.startswith('fit'):
                         print("one fit is getted.")
-                        f=hdfs_get_file(filepath,k,"./",delete)
+                        f=hdfs_get_file(filepath,k,"./",delete=True)
                         tmp=np.load(f)
                         print("fitness:",tmp)
+                        time.sleep(1)
                         os.remove(f)
                         tmp_x=tmp[0]
                         tmp_fit=tmp[1]
@@ -290,15 +291,15 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         print('***************NCS initialization***************')
         tmp_x_ = np.array(crates_list)
         tmp_input_x = tmp_crates
-        print(tmp_x_)
-        print(tmp_input_x)
+        #print(tmp_x_)
+        #print(tmp_input_x)
         for _ii in range(len(tmp_ind)):
             tmp_x_[layer_inds[tmp_ind[_ii]]] = tmp_input_x[_ii]
 
         set_solutions([tmp_x_])
-        print("now,try to get all the fitnesses.")
-        print("tmp_x",tmp_x_)
-        print("len:",len([tmp_x_]))
+        #print("now,try to get all the fitnesses.")
+        #print("tmp_x",tmp_x_)
+        #print("len:",len([tmp_x_]))
         _,tmp_fit = get_all(len([tmp_x_]))
         #_,tmp_fit = evaluate(the_input_batch, [tmp_x_], 1, accuracy_)
         #set_solutions([tmp_x_])
@@ -310,7 +311,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         # set_solutions([tmp_x_])
         # _,tmp_fit=get_all()
         print('all fitness gotten.')
-        print(es.popsize,"tmp_fit:",tmp_fit,es.popsize*tmp_fit)
+        #print(es.popsize,"tmp_fit:",tmp_fit,es.popsize*tmp_fit)
         es.set_initFitness(es.popsize*tmp_fit)
         print('fit:{}'.format(tmp_fit))
         print('***************NCS initialization***************')
@@ -334,10 +335,10 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         #     print(i)
         # print(tmp.shape)
         set_solutions(X)
-        print("lenX,x",len(X),X)
+        #print("lenX,x",len(X),X)
         X_arrange,fit=get_all(len(X))
-        print(X_arrange)
-        print("Fit",fit)
+        #print(X_arrange)
+        #print("Fit",fit)
         #np.save(work_path+'/solutions.npy',X)
         #X_arrange,fit=get_fit('fitness.npy')
         #X_arrange,fit = evaluate(the_input_batch, X, 1, accuracy_)
