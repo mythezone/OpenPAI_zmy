@@ -98,3 +98,7 @@ def set_work(itr=0,tmax=30001,remote_path='/shared/work/'):
       f.write(msg)
     hdfs_set_file('./',remote_path,"new_itr.txt")
 
+def init_work_path(remote_path='/shared/work/'):
+    pass
+
+

@@ -144,7 +144,8 @@ def single_evaluate(the_input,x,batchcount,acc):
 
 #the_input_batch = sc.broadcast(solver.net.blobs['data'].data)
 time.sleep(5)
-the_input_batch= hdfs_load('/shared/work/','data.npy')
+f=wait_hdfs_file('/shared/work/','data.npy')
+the_input_batch= np.load(f)
 #the_input_batch = np.load('work/data.npy')
 hdfs_client=pyhdfs.HdfsClient('10.20.37.175',9000)
 while True:
