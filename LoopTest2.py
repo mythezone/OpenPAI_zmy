@@ -1,95 +1,13 @@
 # coding=utf-8
 import os
-os.environ['GLOG_minloglevel'] = '2'
 import sys
-sys.path.insert(0, './python/')
-#import caffe
 import numpy as np
 from lcg_random import lcg_rand
 import ncs
 from easydict import EasyDict as edict
 import time
 import pdb
-#from pyspark.context import SparkContext
-#import socket
-
-
-#------------------------------hdfs functions------------------------------#
-import pyhdfs
-
-def wait_hdfs_file(filepath,filename,delete=False,hdfs_path="10.20.37.175",port=9000):
-    flag=True
-    hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
-    while flag:
-        files=hdfs_client.listdir(filepath)
-        if files == []:
-            time.sleep(1)
-            continue
-        else:
-            if filename in files:
-                file_path=filepath+filename
-                f=hdfs_get_file(filepath,filename,"./",delete)
-                flag=False
-            else:
-                time.sleep(1)
-    print('The waited file has been retrived to local machine!')
-    return f
-
-def hdfs_set_file(local_file_path,remote_file_path,filename,hdfs_path="10.20.37.175",port=9000):
-    hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
-    files=hdfs_client.listdir(remote_file_path)
-    if filename in files:
-        hdfs_client.delete(remote_file_path+filename)
-    hdfs_client.copy_from_local(local_file_path+filename,remote_file_path+filename)
-    print("set Completed!")
-
-def hdfs_get_file(remote_path,filename,local_path,delete=False,hdfs_path='10.20.37.175',port=9000):
-    hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
-    hdfs_client.copy_to_local(remote_path+filename,local_path+filename)
-    print("load completed!")
-    if delete:
-        hdfs_client.delete(remote_path+filename)
-    return local_path+filename
-
-def hdfs_load(remote_path,filename,local_path='./',delete=False):
-    f=hdfs_get_file(remote_path,filename,local_path,delete)
-    d=np.load(f)
-    os.remove(local_path+filename)
-    return d
-
-def hdfs_save(remote_path,filename,arr,local_path='./',delete=False):
-    np.save(local_path+filename,arr)
-    hdfs_set_file(local_path,remote_path,filename)
-
-def hdfs_init_fold(remote_path,hdfs_path="10.20.37.175",port=9000):
-    hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
-    try:
-      files=hdfs_client.listdir(remote_path)
-    except:
-      hdfs_client.mkdirs(remote_path)
-      return
-    if files==[]:
-      return
-    else:
-      for k in files:
-        hdfs_client.delete(remote_path+k)
-      return
-
-def set_work(itr=0,tmax=30001,remote_path='/shared/work/'):
-    '''
-    set the "new_iter.txt" file.
-    :param itr: the number of iter
-    :return: nothing but will set "new_iter.txt" in work_path containing itr or "over".
-    '''
-    if itr>tmax:
-      msg="over"
-    else:
-      msg="1001"
-    with open("new_itr.txt",'w') as f:
-      f.write(msg)
-    hdfs_set_file('./',remote_path,"new_itr.txt")
-
-#----------------------------end of hdfs functions-----------------------------#
+from pai_pyhdfs import *
 
 # model files
 proto='./models/lenet300100/lenet_train_test.prototxt'
@@ -101,16 +19,7 @@ solver_path='./models/lenet300100/lenet_solver.prototxt'
 es_method='ncs'
 origin_proto_name = './models/lenet300100/lenet_origin.prototxt'
 parallel_file_name = './tmp_model.caffemodel'
-# cpu/gpu
-#caffe.set_mode_cpu()
-#caffe.set_device(0)
-# init solver
-#solver = caffe.SGDSolver(solver_path)
-# basic parameters
-#   accuracy constraint for pruning
 acc_constrain=0.08
-#   stop iteration count
-#niter = 20501
 niter = 30001
 #   stop pruning iteration count
 prune_stop_iter = 15000
@@ -136,10 +45,6 @@ es_cache = {}
 #retrieval_tag=[]
 r_count=0
 work_path="/shared/work/"
-
-# print("NCSLoop is runing!")
-# sc=SparkContext()
-# print("sc context has been set.")
 
 # definition of many axuliliary methods
 #   run the network on its dataset
@@ -263,19 +168,9 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
     :param accuracy_: in accuracy.npy file
     :return: create crates_list.npy
     '''
-    #thenet = caffe.Net(origin_proto_name, caffe.TEST)
-    # solver.net.copy_from(work_path+'/tmp.caffemodel')
+
     the_input_batch=hdfs_load('/shared/work/','data.npy')
-    # solver.net.blobs['data'].data[:]=the_input_batch[:]
-    # print("max:",np.max(the_input_batch))
-    # accuracy_ = test_net(solver.net, _count=1, _start="ip1")
-    # print("accuracy_:",accuracy_)
     es = {}
-    #reference_model = sc.broadcast(solver.net) ## not work, can not be pickled
-    #solver.net.save(parallel_file_name) # share model by files through parallel individual
-    #print(solver.net.blobs['data'].data.shape)
-    #the_input_batch = sc.broadcast(solver.net.blobs['data'].data)
-    #the_input_batch = sc.broadcast(solver.net.blobs['data'].data)
     
     if es_method == 'ncs':
         __C = edict()
@@ -291,27 +186,13 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         print('***************NCS initialization***************')
         tmp_x_ = np.array(crates_list)
         tmp_input_x = tmp_crates
-        #print(tmp_x_)
-        #print(tmp_input_x)
         for _ii in range(len(tmp_ind)):
             tmp_x_[layer_inds[tmp_ind[_ii]]] = tmp_input_x[_ii]
 
         set_solutions([tmp_x_])
-        #print("now,try to get all the fitnesses.")
-        #print("tmp_x",tmp_x_)
-        #print("len:",len([tmp_x_]))
         _,tmp_fit = get_all(len([tmp_x_]))
-        #_,tmp_fit = evaluate(the_input_batch, [tmp_x_], 1, accuracy_)
-        #set_solutions([tmp_x_])
-        # print([tmp_x_])
-        # tmp=np.array([tmp_x_])
-        # for i in tmp:
-        #     print(i)
-        # print(tmp.shape)
-        # set_solutions([tmp_x_])
-        # _,tmp_fit=get_all()
         print('all fitness gotten.')
-        #print(es.popsize,"tmp_fit:",tmp_fit,es.popsize*tmp_fit)
+
         es.set_initFitness(es.popsize*tmp_fit)
         print('fit:{}'.format(tmp_fit))
         print('***************NCS initialization***************')
@@ -319,7 +200,6 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
     while not es.stop():
         print("now in the es loop.")
         count+=1
-        #print("count",count)
         if count==15:
             break
         x = es.ask()
@@ -329,29 +209,15 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
             for _ii in range(len(tmp_ind)):
                 tmp_x_[layer_inds[tmp_ind[_ii]]] = x_[_ii]
             X.append(tmp_x_)
-        # print(X)
-        # tmp=np.array(X)
-        # for i in tmp:
-        #     print(i)
-        # print(tmp.shape)
         set_solutions(X)
-        #print("lenX,x",len(X),X)
         X_arrange,fit=get_all(len(X))
-        #print(X_arrange)
-        #print("Fit",fit)
-        #np.save(work_path+'/solutions.npy',X)
-        #X_arrange,fit=get_fit('fitness.npy')
-        #X_arrange,fit = evaluate(the_input_batch, X, 1, accuracy_)
-        #exit()
         X = []
         for x_ in X_arrange:
             tmp_x_ = np.array(len(tmp_ind)*[0.])
             for _ii in range(len(tmp_ind)):
                 tmp_x_[_ii]= x_[layer_inds[tmp_ind[_ii]]] 
             X.append(tmp_x_)
-        #print X,fit
         es.tell(X, fit)
-        #es.disp(100)
         for _ii in range(len(tmp_ind)):
             crates_list[layer_inds[tmp_ind[_ii]]] = es.result()[0][_ii]
     for c_i in range(len(crates_list)):
@@ -363,7 +229,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
     np.save('crates_list.npy',crates_list)
     hdfs_set_file('./','/shared/work/','crates_list.npy')
     os.remove('crates_list.npy')
-    # apply_prune(solver.net, crates_list)
+
 
 
 time.sleep(3)
