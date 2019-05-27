@@ -1,6 +1,7 @@
 import pyhdfs
 import time
 import numpy as np
+import os,sys
 
 def wait_hdfs_file(filepath,filename,delete=False,hdfs_path="10.20.37.175",port=9000):
     flag=True
