@@ -139,6 +139,10 @@ class NCS:
       print("tmpT",tempTrialFit)
       print("fitSet",fitSet)
       print("min_f",self.min_f)
+      print("tempFit",tempFit)
+      mid_tmp=tempFit+tempTrialFit
+      print("OK",mid_tmp)
+      
       normFit = tempFit / (tempFit + tempTrialFit)
       normTrialFit = tempTrialFit / (tempFit + tempTrialFit)
 
