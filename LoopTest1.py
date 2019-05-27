@@ -35,8 +35,6 @@ def apply_prune(thenet, _crates):
            thenet.params[layer_id][2].data.ravel()[0] = -_crates[_id]
          else:
            thenet.params[layer_id][2].data.ravel()[0] = 1+_crates[_id]
-         # else:
-         #   pdb.set_trace()
 
 def get_sparsity(thenet):
    '''
@@ -49,7 +47,6 @@ def get_sparsity(thenet):
       remain += len(np.where(thenet.params[layer_id][3].data != 0)[0])
       total += thenet.params[layer_id][0].data.size
       total += thenet.params[layer_id][1].data.size
-   #return total*1./(100.*remain)
    return remain*1./total
 
    
@@ -58,10 +55,6 @@ def outer_loop(itr=1001):
     global work_path
     global crates_list
     for itr in range(1,itr):
-      
-      #r = np.random.rand()
-      #if itr%500==0 and solver.test_nets[0].blobs['accuracy'].data >= 0.9909:
-      #  retrieval_tag.append(itr)
       tmp_crates=[]
       tmp_ind = []
       for ii in layer_name:
@@ -79,19 +72,13 @@ def outer_loop(itr=1001):
           for t_name in tmp_ind:
               _tmp_c[layer_inds[t_name]] = crates[t_name]
           apply_prune(solver.net, _tmp_c)
-      #if len(tmp_ind)>1 and itr < prune_stop_iter:
       if itr%1000==0 and len(tmp_ind)>1 and itr < prune_stop_iter:# run at window @3
           st1=str(tmp_crates)
           st2=str(tmp_ind)
-          
-          #solver.net.save(work_path+'/tmp.caffemodel')
           solver.net.save(parallel_file_name)
           hdfs_set_file('./','/shared/work/',parallel_file_name)
           data=solver.net.blobs['data'].data
-          #print("max",np.max(data))
           hdfs_save('/shared/work/','data.npy',data)
-          #np.save(work_path+'/data.npy',data)
-          
           accuracy_ = test_net(solver.net, _count=1, _start="ip1")
           #print("accuracy_:",accuracy_)
           # st3=str(accuracy_)
@@ -100,7 +87,6 @@ def outer_loop(itr=1001):
           msg='['+st1+','+st2+']' # message to send to LoopTest2.py.
           with open('ncs_start.txt','w') as f:
                 f.write(msg)
-
           hdfs_set_file('./','/shared/work/','ncs_start.txt',delete=True)
 
           while True:
@@ -110,42 +96,14 @@ def outer_loop(itr=1001):
             when the 'ncs_over.txt' file is in the work path, this loop will get the result in crates_list.npy,
             and retraining the model with the solution applied by the ncsloop.
             '''
-
             f=wait_hdfs_file('/shared/work/','ncs_over.txt',delete=True)
             crate_list=hdfs_load('/shared/work/','crates_list.npy',delete=True)
             apply_prune(solver.net,crate_list)
             solver.step(1)
             return
             
-            # time.sleep(10)
-            # files=os.listdir(work_path)
-            # if files == []:
-            #     #print("waitingfor ncsloop over!")
-            #     time.sleep(10)
-            #     continue
-            # else:
-            #     for k in files:
-            #       if k!='ncs_over.txt':
-            #         #print("checking the File name.")
-            #         continue
-            #       else:
-            #         filepath=work_path+"/"+k
-            #         print("Get the result of NCSloop")
-            #         os.remove(filepath)
-            #         crates_list=np.load(work_path+'/crates_list.npy')
-            #         apply_prune(solver.net,crates_list)
-            #         #retrainning
-            #         solver.step(1)
-            #         return
-            #     time.sleep(10)
-            # crates_list=np.load(work_path+'/crates_list.npy')
-            # apply_prune(solver.net,crates_list)
-      #retrainning
       solver.step(1)
 #---------------------------------functions end-----------------------------------#
-
-
-
 
 #----------------------------init------------------------------------#
 # model files
@@ -208,7 +166,6 @@ while flag:
     waiting for "new_iter.txt" to start a new loop.
     when the loop is over, "report.txt" will be created in the work path.
     '''
-
     f=wait_hdfs_file("/shared/work/",'new_itr.txt',delete=True)
     with open(f,'r') as ff:
       msg=ff.read()
@@ -218,11 +175,13 @@ while flag:
       else:
         itr=eval(msg)
         print('receive the number of itr:',itr)
-    
-    os.remove(f)
+    try:
+      os.remove(f)
+    except:
+      pass
 
     with open('report.txt','w') as ff:
-      ff.write('15002')
+      ff.write('10001') #just for test,in real work this will be changed into '1001'
 
     outer_loop(1001)
     hdfs_set_file('./','/shared/work/','report.txt',delete=False)
