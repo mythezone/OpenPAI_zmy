@@ -164,7 +164,10 @@ while True:
         fn='fit_'+f
         np.save(fn,np.array([ff,fit]))
         print("npy file has been setted!")
-        hdfs_set_file('./','/shared/work/',fn)
+        try:
+          hdfs_set_file('./','/shared/work/',fn)
+        except:
+          pass
         time.sleep(1)
         os.remove(fn)
         hdfs_client.delete('/shared/work/'+f)
