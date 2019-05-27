@@ -212,8 +212,9 @@ def get_all(n):
                 continue
             else:
                 for k in files:
-                    print('in the for loop.')
+                    #print('in the for loop.')
                     if k.startswith('fit'):
+                        print("one fit is getted.")
                         f=hdfs_get_file(filepath,k,"./",delete)
                         tmp=np.load(f)
                         #print("tmp:",tmp)
@@ -226,6 +227,7 @@ def get_all(n):
                         #print("X",X)
                         count-=1
                         if count==0:
+                            flag=False
                             print("all the results recevied!")
                             return np.array([X,res])
                         time.sleep(1)
