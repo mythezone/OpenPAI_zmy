@@ -24,12 +24,14 @@ def wait_hdfs_file(filepath,filename,delete=False,hdfs_path="10.20.37.175",port=
 def hdfs_set_file(local_file_path,remote_file_path,filename,hdfs_path="10.20.37.175",port=9000):
     hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
     files=hdfs_client.listdir(remote_file_path)
-    if filename in files:
+    while filename in files:
         try:
             hdfs_client.delete(remote_file_path+filename)
+            files=hdfs_client.listdir(remote_file_path)
             time.sleep(2)
         except:
-            pass
+            files=hdfs_client.listdir(remote_file_path)
+
     hdfs_client.copy_from_local(local_file_path+filename,remote_file_path+filename)
     print("set Completed!")
 
@@ -42,10 +44,14 @@ def hdfs_get_file(remote_path,filename,local_path,delete=False,hdfs_path='10.20.
         hdfs_client.copy_to_local(remote_path+filename,local_path+filename)
     print("load completed!")
     if delete:
-        try:
-            hdfs_client.delete(remote_path+filename)
-        except:
-            pass
+        files=hdfs_client.listdir(remote_path)
+        while filename in files:
+            try:
+                hdfs_client.delete(remote_path+filename)
+                files=hdfs_client.listdir(remote_path)
+                time.sleep(2)
+            except:
+                files=hdfs_client.listdir(remote_path)
     return local_path+filename
 
 def hdfs_load(remote_path,filename,local_path='./',delete=False):
