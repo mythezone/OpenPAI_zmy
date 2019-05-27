@@ -87,7 +87,7 @@ def outer_loop(itr=1001):
           msg='['+st1+','+st2+']' # message to send to LoopTest2.py.
           with open('ncs_start.txt','w') as f:
                 f.write(msg)
-          hdfs_set_file('./','/shared/work/','ncs_start.txt',delete=True)
+          hdfs_set_file('./','/shared/work/','ncs_start.txt')
 
           while True:
             #print("Waiting for NCSloop over")
