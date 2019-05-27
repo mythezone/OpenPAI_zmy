@@ -189,86 +189,6 @@ def get_sparsity(thenet):
    #return total*1./(100.*remain)
    return remain*1./total
 
-#  evaluate the accuracy of a network with a set of crates respect to a original accuracy
-#  thenet is the broadcasted reference model
-# def evaluate(the_input, x_set, batchcount=1, accuracy_ontrain=0.9988):
-#    '''
-#    the_input:training data
-#    x_set:the solutions
-#    accuracy_ontrain: the accuracy.
-#    return : [array of solutions,array of fitnesses]
-#    '''
-#    fitness=[]
-#    X=[]
-#    # distributed evaluation by spark
-#    def single_eval(x):
-#      import sys
-#      sys.path.insert(0, './python/')
-#      import os
-#      os.environ['GLOG_minloglevel'] = '2'
-#      import caffe
-#      x_fit = 1.1
-#      #thenet = caffe.Net(origin_proto_name, caffe.TEST)
-#      # thenet.copy_from(parallel_file_name)
-#      s = caffe.SGDSolver(solver_path)
-#      s.net.copy_from(parallel_file_name)
-#      thenet=s.net
-#      #print("shape of thenet, the_input", thenet.blobs['data'].data.shape, the_input.value.shape)
-#      thenet.blobs['data'].data[:] = the_input
-#      #print("difference:", (thenet.blobs['data'].data - the_input.value).mean())
-#      apply_prune(thenet,x)
-#      #acc = test_net(thenet, _start='ip1', _count=batchcount)
-#      acc = test_net(thenet,  _count=batchcount)
-#      #print(the_input.value.shape)
-#      #acc = thenet.forward(data=the_input.value).blobs['accuracy'].data
-#      if acc >= accuracy_ontrain - acc_constrain:
-#        x_fit = get_sparsity(thenet)
-#      #print('accuracy_ontrain, acc',accuracy_ontrain, acc)
-#      return ([x], [x_fit])
-
-#    def merge_results(a, b):
-#      return (a[0]+b[0], a[1]+b[1])
-#    res=[]
-#    for s in x_set:
-#        res.append(single_eval(s))
-
-#    #final_results = sc.parallelize(x_set).map(single_eval).reduce(merge_results)
-#    #print('individual num:', len(x_set))
-#    #print(final_results)
-#    return (x_set,res)
-
-
-# #NCS loop
-# def get_fit(filename):
-#     '''
-#     here is the evaluation part.
-#     the next work is staring here.
-#     '''
-#     # with open(work_path+'/solutions.txt','w') as f:
-#     #     f.write(str(X))
-#     f=wait_hdfs_file('/shared/work/',filename,delete=True)
-#     tmp_fit=np.load(f)
-#     os.remove(f)
-#     return tmp_fit
-#     # while True:
-#     #     files=os.listdir(work_path)
-#     #     if files == []:
-#     #         #print("subloop is sleeping!")
-#     #         time.sleep(5)
-#     #         continue
-#     #     else:
-#     #         for k in files:
-#     #             if k!=filename:
-#     #                 print("checking the File name.")
-#     #                 continue
-#     #             else:
-#     #                 print("Fitness has gotten!!")
-#     #                 filepath=work_path+"/"+k
-#     #                 tmp_fit=np.load(filepath)
-#     #                 os.remove(filepath)
-#     #                 return tmp_fit
-#     #         time.sleep(5)
-
 def get_all(n):
     '''
     This function will get all the result in "fitX.npy",and stack them in a array.
@@ -292,6 +212,7 @@ def get_all(n):
                 continue
             else:
                 for k in files:
+                    print('in the for loop.')
                     if k.startswith('fit'):
                         f=hdfs_get_file(filepath,k,"./",delete)
                         tmp=np.load(f)
@@ -319,27 +240,6 @@ def set_solutions(solutions):
     :param solutions:
     :return:
     '''
-    # #print(np.array(solutions).shape)
-    # l=len(solutions)
-    # p1=l//3
-    # p2=l*2//3
-    # s1=solutions[:p1]
-    # s2=solutions[p1:p2]
-    # s3=solutions[p2:]
-    # #print(s1)
-    # #print(s2)
-    # #print(s3)
-    # np.save(work_path+'/solutions1.npy',s1)
-    # np.save(work_path+'/solutions2.npy',s2)
-    # np.save(work_path+'/solutions3.npy',s3)
-    # hdfs_set_file(work_path,'/shared/work/','solutions1.npy')
-    # hdfs_set_file(work_path,'/shared/work/','solutions2.npy')
-    # hdfs_set_file(work_path,'/shared/work/','solutions3.npy')
-    # os.remove(work_path+'/solutions1.npy')
-    # os.remove(work_path+'/solutions2.npy')
-    # os.remove(work_path+'/solutions3.npy')
-    # #np.save(work_path+'/accuracy.npy',accuracy)
-    # print("files has been setted.")
     count=0
     for solution in solutions:
       fn='solution_'+str(count)+'.npy'
@@ -393,6 +293,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
             tmp_x_[layer_inds[tmp_ind[_ii]]] = tmp_input_x[_ii]
 
         set_solutions([tmp_x_])
+        print("now,try to get all the fitnesses.")
         _,tmp_fit = get_all(len(tmp_x_))
         #_,tmp_fit = evaluate(the_input_batch, [tmp_x_], 1, accuracy_)
         #set_solutions([tmp_x_])
@@ -403,6 +304,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         # print(tmp.shape)
         # set_solutions([tmp_x_])
         # _,tmp_fit=get_all()
+        print('all fitness gotten.')
         es.set_initFitness(es.popsize*tmp_fit)
         print('fit:{}'.format(tmp_fit))
         print('***************NCS initialization***************')
@@ -473,10 +375,12 @@ while True:
         msg=eval(msg)
         tmp_crates=msg[0]
         tmp_ind=msg[1]
-        tmp_accuracy_=hdfs_load('/shared/work/','accuracy.npy')
-      NCSloop(tmp_crates,tmp_ind,tmp_accuracy_)
-      print("NCSloop is completed!")
-      os.remove(f)
-      with open('ncs_over.txt','w') as ff:
-        ff.write('complete!')
-      hdfs_set_file('./','/shared/work/','ncs_over.txt')
+    
+    tmp_accuracy_=hdfs_load('/shared/work/','accuracy.npy')
+    print('accuracy is loaded.')
+    NCSloop(tmp_crates,tmp_ind,tmp_accuracy_)
+    print("NCSloop is completed!")
+    os.remove(f)
+    with open('ncs_over.txt','w') as ff:
+      ff.write('complete!')
+    hdfs_set_file('./','/shared/work/','ncs_over.txt')
