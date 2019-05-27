@@ -217,7 +217,7 @@ def get_all(n):
                         print("one fit is getted.")
                         f=hdfs_get_file(filepath,k,"./",delete)
                         tmp=np.load(f)
-                        #print("tmp:",tmp)
+                        print("fitness:",tmp)
                         os.remove(f)
                         tmp_x=tmp[0]
                         tmp_fit=tmp[1]
@@ -242,6 +242,7 @@ def set_solutions(solutions):
     :param solutions:
     :return:
     '''
+    print("solutions",solutions,"len:",len(solutions))
     count=0
     for solution in solutions:
       fn='solution_'+str(count)+'.npy'
@@ -298,7 +299,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         print("now,try to get all the fitnesses.")
         print("tmp_x",tmp_x_)
         print("len:",len([tmp_x_]))
-        _,tmp_fit = get_all(len(tmp_x_))
+        _,tmp_fit = get_all(len([tmp_x_]))
         #_,tmp_fit = evaluate(the_input_batch, [tmp_x_], 1, accuracy_)
         #set_solutions([tmp_x_])
         # print([tmp_x_])
