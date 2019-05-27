@@ -232,7 +232,7 @@ def get_all(n):
                             return np.array([X,res])
                         time.sleep(1)
     
-    return wait_hdfs_files('/shared/work/',delete=True)
+    return wait_hdfs_files('/shared/work/')
                             
 
 def set_solutions(solutions):
@@ -297,7 +297,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         set_solutions([tmp_x_])
         print("now,try to get all the fitnesses.")
         print("tmp_x",tmp_x_)
-        print("len:",len(tmp_x_))
+        print("len:",len([tmp_x_]))
         _,tmp_fit = get_all(len(tmp_x_))
         #_,tmp_fit = evaluate(the_input_batch, [tmp_x_], 1, accuracy_)
         #set_solutions([tmp_x_])
