@@ -309,6 +309,7 @@ def NCSloop(tmp_crates,tmp_ind,accuracy_):
         # set_solutions([tmp_x_])
         # _,tmp_fit=get_all()
         print('all fitness gotten.')
+        print(es.popsize,es.popsize*tmp_fit)
         es.set_initFitness(es.popsize*tmp_fit)
         print('fit:{}'.format(tmp_fit))
         print('***************NCS initialization***************')
