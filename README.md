@@ -104,4 +104,47 @@
     ]
     }
     ```
-    
+
+
+## 作为一个独立demo运行,Job config如下:
+```json
+{
+  "jobName": "demo_test_16af8e48",
+  "image": "registry.cn-hangzhou.aliyuncs.com/lgy_sustech/olmp:v2",
+  "virtualCluster": "default",
+  "taskRoles": [
+    {
+      "name": "main",
+      "taskNumber": 1,
+      "cpuNumber": 2,
+      "memoryMB": 8192,
+      "gpuNumber": 0,
+      "command": "git clone https://github.com/mythezone/OpenPAI_zmy.git   && cd OpenPAI_zmy&&chmod 777 * &&  python main1.py "
+    },
+    {
+      "name": "looptest1",
+      "taskNumber": 1,
+      "cpuNumber": 4,
+      "memoryMB": 8192,
+      "gpuNumber": 1,
+      "command": "git clone https://github.com/mythezone/OpenPAI_zmy.git  && cd OpenPAI_zmy&&chmod 777 * &&  python LoopTest1.py "
+    },
+    {
+      "name": "looptest2",
+      "taskNumber": 1,
+      "cpuNumber": 4,
+      "memoryMB": 8192,
+      "gpuNumber": 0,
+      "command": "git clone https://github.com/mythezone/OpenPAI_zmy.git  && cd OpenPAI_zmy&&chmod 777 * &&  python LoopTest2.py "
+    },
+    {
+      "name": "single_threading",
+      "taskNumber": 1,
+      "cpuNumber": 4,
+      "memoryMB": 8192,
+      "gpuNumber": 1,
+      "command": "git clone https://github.com/mythezone/OpenPAI_zmy.git  && cd OpenPAI_zmy&&chmod 777 *  &&  python single_threading1.py "
+    }
+  ]
+}
+```
