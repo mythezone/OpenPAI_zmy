@@ -248,17 +248,3 @@ while True:
         os.remove(fn)
         hdfs_client.delete('/shared/work/'+f)
         print("OK,fitness has been setted.  waiting for the next evaluation.")
-        
-
-
-    # f=wait_hdfs_file('/shared/work/','solutions1.npy',delete=True)
-    # X=np.load(f)
-    # os.remove(f)
-    # accuracy=hdfs_load('/shared/work/','accuracy.npy')
-    # if len(X)==0:
-    #   np.save('./fit1.npy',[[],[]])
-    # else:
-    #   fit=evaluate(the_input_batch,X,1,accuracy)
-    #   np.save('./fit1.npy',np.array(fit))
-    # hdfs_set_file('./fit1.npy','/shared/work/','fit1.npy')
-    # os.remove('./fit1.npy')

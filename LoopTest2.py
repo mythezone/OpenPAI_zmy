@@ -293,7 +293,7 @@ def get_all(n):
             else:
                 for k in files:
                     if k.startswith('fit'):
-                        f=hdfs_get_file(filepath,k,"./",delete=True)
+                        f=hdfs_get_file(filepath,k,"./",delete)
                         tmp=np.load(f)
                         #print("tmp:",tmp)
                         os.remove(f)

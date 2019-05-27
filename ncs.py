@@ -134,7 +134,11 @@ class NCS:
           self.k_bestpop[tmp_max_ind, :] = self.bestpop
 
       tempFit = self.fit - self.min_f
+    
       tempTrialFit = fitSet - self.min_f
+      print("tmpT",tempTrialFit)
+      print("fitSet",fitSet)
+      print("min_f",self.min_f)
       normFit = tempFit / (tempFit + tempTrialFit)
       normTrialFit = tempTrialFit / (tempFit + tempTrialFit)
 
