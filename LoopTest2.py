@@ -110,51 +110,29 @@ def get_all(n):
         res=[]
         X=[]
 
-        while flag:
+        while count!=0:
             files=hdfs_client.listdir(filepath)
-            if files == []:
-                time.sleep(1)
-                continue
-            else:
-                for k in files:
-                    #print('in the for loop.')
-                    if k.startswith('fit'):
+            for k in files:
+                #print('in the for loop.')
+                if k.startswith('fit'):
+                  tmp_files=hdfs_client.listdir(filepath)
+                  while k in tmp_files:
+                    try:
+                      tmp=hdfs_load('/shared/work/',k,delete=False)
+                      #time.sleep(1)
+                      hdfs_client.delete('/shared/work/'+k)
                       tmp_files=hdfs_client.listdir(filepath)
-                      while k in tmp_files:
-                        try:
-                          tmp=hdfs_load('/shared/work/',k,delete=False)
-                          time.sleep(1)
-                          hdfs_client.delete('/shared/work/'+k)
-                          tmp_files=hdfs_client.listdir(filepath)
-                        except:
-                          tmp_files=hdfs_client.listdir(filepath)
-                
-                        # try:
-                        #   tmp=hdfs_load('/shared/work/',k,delete=True)
-                        # except:
-                        #   f=hdfs_get_file(filepath,k,"./",delete=True)
-                        #   try:
-                        #     tmp=np.load(f)
-                        #   except:
-                        #     print("something wrong is occred.")
-                        #     time.sleep(3)
-                        #     tmp=np.load(f)
+                    except:
+                      tmp_files=hdfs_client.listdir(filepath)
 
-                          # try:
-                          #   os.remove(f)
-                          # except:
-                          #   pass
-                        tmp_x=tmp[0]
-                        tmp_fit=tmp[1]
-                        res.append(tmp_fit)
-                        X.append(tmp_x)
-                        count-=1
-                        if count==0:
-                            flag=False
-                            print("all the results recevied!")
-                            return np.array([X,res])
-                        #time.sleep(1)
-    
+                  tmp_x=tmp[0]
+                  tmp_fit=tmp[1]
+                  res.append(tmp_fit)
+                  X.append(tmp_x)
+                  count-=1
+        print("all the results recevied!")
+        return np.array([X,res])
+   
     return wait_hdfs_files('/shared/work/')
                             
 
