@@ -119,18 +119,17 @@ def get_all(n):
                 for k in files:
                     #print('in the for loop.')
                     if k.startswith('fit'):
-                        #print("one fit is getted.")
                         f=hdfs_get_file(filepath,k,"./",delete=True)
                         tmp=np.load(f)
-                        #print("fitness:",tmp)
                         time.sleep(1)
-                        os.remove(f)
+                        try:
+                          os.remove(f)
+                        except:
+                          pass
                         tmp_x=tmp[0]
                         tmp_fit=tmp[1]
                         res.append(tmp_fit)
                         X.append(tmp_x)
-                        #print('res',res)
-                        #print("X",X)
                         count-=1
                         if count==0:
                             flag=False
@@ -151,10 +150,16 @@ def set_solutions(solutions):
     print("solutions",solutions,"len:",len(solutions))
     count=0
     for solution in solutions:
-      fn='solution_'+str(count)+'.npy'
+      fn='solution_'+str(np.random.randint(0,9999999))+'.npy'
       np.save(fn,solution)
-      hdfs_set_file('./','/shared/work/',fn)
-      os.remove(fn)
+      try:
+        hdfs_set_file('./','/shared/work/',fn)
+      except:
+        pass
+      try:
+        os.remove(fn)
+      except:
+        pass
       count+=1
     print('All the solutions have been setted!')
 
