@@ -115,7 +115,7 @@ weights='./models/lenet300100/lenet300100_iter_10000.caffemodel'
 solver_path='./models/lenet300100/lenet_solver.prototxt'
 es_method='ncs'
 origin_proto_name = './models/lenet300100/lenet_origin.prototxt'
-parallel_file_name = './tmp_model.caffemodel'
+parallel_file_name = 'tmp_model.caffemodel'
 # cpu/gpu
 caffe.set_mode_gpu()
 caffe.set_device(0)
@@ -151,7 +151,7 @@ es_cache = {}
 #retrieval_tag=[]
 r_count=0
 
-work_path="./work"
+work_path="/shared/work/"
 #---------------------------init end---------------------------#
 
 
