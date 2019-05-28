@@ -170,8 +170,8 @@ while flag:
     with open(f,'r') as ff:
       msg=ff.read()
       if msg=='over':
-        flag=False
-        continue
+        # flag=False
+        print("This iteration is over, waiting for the next job.")
       else:
         itr=eval(msg)
         print('receive the number of itr:',itr)
@@ -179,9 +179,9 @@ while flag:
       os.remove(f)
     except:
       pass
+    if msg!='over':
+      with open('report.txt','w') as ff:
+        ff.write('10001') #just for test,in real work this will be changed into '1001'
 
-    with open('report.txt','w') as ff:
-      ff.write('10001') #just for test,in real work this will be changed into '1001'
-
-    outer_loop(1001)
-    hdfs_set_file('./','/shared/work/','report.txt')
+      outer_loop(1001)
+      hdfs_set_file('./','/shared/work/','report.txt')
