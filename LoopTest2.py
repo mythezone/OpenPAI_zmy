@@ -9,6 +9,7 @@ import time
 import pdb
 from pai_pyhdfs import *
 
+#-----------------------init---------------------------#
 # model files
 proto='./models/lenet300100/lenet_train_test.prototxt'
 # based on the network used in DS paper, 97.72 accuracy
@@ -45,6 +46,8 @@ es_cache = {}
 #retrieval_tag=[]
 r_count=0
 work_path="/shared/work/"
+
+#-----------------------init over-----------------------#
 
 # definition of many axuliliary methods
 #   run the network on its dataset
@@ -240,11 +243,11 @@ while True:
     waiting for "ncs_start.txt" file to start work.
     when one loop is over,create a "fitness_over.txt" file in work path.
     '''
-    f=wait_hdfs_file('/shared/work/','ncs_start.txt',delete=False)
+    f=wait_hdfs_file('/shared/work/','ncs_start.txt',delete=True)
     with open(f,'r') as ff:
       msg=ff.read()
       if msg=='exit':
-        exit()
+        continue
       else:
         msg=eval(msg)
         tmp_crates=msg[0]

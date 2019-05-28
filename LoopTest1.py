@@ -172,6 +172,9 @@ while flag:
       if msg=='over':
         # flag=False
         print("This iteration is over, waiting for the next job.")
+        with open('ncs_start.txt','w') as ff:
+          ff.write('exit')
+        hdfs_set_file('./','/shared/work/','ncs_start.txt')
       else:
         itr=eval(msg)
         print('receive the number of itr:',itr)
@@ -181,7 +184,6 @@ while flag:
       pass
     if msg!='over':
       with open('report.txt','w') as ff:
-        ff.write('10001') #just for test,in real work this will be changed into '1001'
-
+        ff.write('10001') #Just for test,in real work this will be changed into '1001'
       outer_loop(1001)
       hdfs_set_file('./','/shared/work/','report.txt')
