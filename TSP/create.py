@@ -1,6 +1,9 @@
 import numpy as np
 import os,sys
+import os_file as tos
 import matplotlib.pyplot as plt
+
+work_path='./TSP/work/'
 
 def create_city(low=0,up=100):
     x=np.random.uniform(low,up,2)
@@ -12,10 +15,10 @@ def create_cities(num=100):
 
 def save_data(num=100):
     cities=create_cities(num)
-    files=os.listdir('./TSP/')
+    files=os.listdir(work_path)
     if 'work' not in files:
-        os.mkdir('./TSP/work')
-    np.save('./TSP/work/cities.npy',cities)
+        os.mkdir(work_path)
+    np.save(work_path+'cities.npy',cities)
 
 def load_data(filepath):
     cities=np.load(filepath)
@@ -49,9 +52,26 @@ def init_solutions(num=10,cities=100):
         solutions.append(random_solution(cities))
     return solutions
 
+def mutation_1(solution):
+    n=len(solution)
+    start=np.random.randint(0,n-2)
+    end=np.random.randint(start+1,n)
+    k=solution[start:end]
+    solution[start:end]=k[::-1]
+    return solution
+
+def mutation_2(solution):
+    n=len(solution)
+    start=np.random.randint(0,n-2)
+    end=np.random.randint(start+1,n)
+    k=solution[start]
+    solution[start:end-1]=solution[start+1:end]
+    solution[end-1]=k
+    return solution
+
 if __name__=="__main__":
     cities=create_cities(100)
-    dist=distance_matrix(cities)
-    solution=random_solution()
-    c=cost(solution,dist)
-    print(c)
+    tos.set_np_file(work_path,'cities.npy',cities)
+    with open(work_path+'new_job.txt','w') as ff:
+        ff.write('cities.npy')
+    
