@@ -1,0 +1,41 @@
+import os,sys
+import numpy as np
+import time
+
+def wait_msg_file(file_path,file_name,delete=False):
+    files=os.listdir(file_path)
+    while True:
+        if file_name in files:
+            with open(file_path+file_name,'r') as ff:
+                msg=ff.read()
+            if delete==True:
+                os.remove(file_path+file_name)
+            return msg
+        else:
+            time.sleep(1)
+            files=os.listdir(file_path)
+
+def wait_np_file(file_path,file_name,delete=False):
+    files=os.listdir(file_path)
+    while True:
+        if file_name in files:
+            arr=np.load(file_path+file_name)
+            if delete==True:
+                os.remove(file_path+file_name)
+            return arr
+        else:
+            time.sleep(1)
+            files=os.listdir(file_path)
+
+def set_np_file(file_path,file_name,arr):
+    arr=np.array(arr)
+    try:
+        os.mkdir(file_path)
+    except:
+        pass
+    np.save(file_path+file_name,arr)
+    return
+
+
+
+
