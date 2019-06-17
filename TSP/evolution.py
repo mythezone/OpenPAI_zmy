@@ -3,7 +3,7 @@ import os_file as to
 import numpy as np
 import time
 
-work_path='./TSP/work/'
+work_path='./work/'
 m=to.wait_np_file(work_path,'distance_matrix.npy')
 
 while True:

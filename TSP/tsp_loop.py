@@ -4,7 +4,7 @@ import numpy as np
 import time,os,sys
 
 threshold=1.0
-work_path='./TSP/work/'
+work_path='./work/'
 # m=to.wait_np_file(work_path,'distance_matrix.npy',delete=False)
 dic=dict()
 final_res=[]

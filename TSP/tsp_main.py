@@ -2,7 +2,7 @@ import create as tc
 import os_file as to
 import numpy as np
 
-work_path='./TSP/work/'
+work_path='./work/'
 
 while True:
     cities_file=to.wait_msg_file(work_path,'new_job.txt',delete=True)

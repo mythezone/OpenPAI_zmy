@@ -2,8 +2,10 @@ import numpy as np
 import os,sys
 import os_file as tos
 import matplotlib.pyplot as plt
+import math
 
-work_path='./TSP/work/'
+
+work_path='./work/'
 
 def create_city(low=0,up=100):
     x=np.random.uniform(low,up,2)
@@ -11,6 +13,7 @@ def create_city(low=0,up=100):
 
 def create_cities(num=100):
     cities=np.random.uniform(0,100,(num,2))
+    
     return cities
 
 def save_data(num=100):
@@ -24,12 +27,34 @@ def load_data(filepath):
     cities=np.load(filepath)
     return cities
 
+'''
+private double distance(final double lat1, final double lon1, final double lat2, final double lon2) {
+    final double theta = lon1 - lon2;
+    double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
+    dist = Math.acos(dist);
+    dist = rad2deg(dist);
+    dist = dist * 60 * 1.1515;
+
+    dist = dist * 1.609344;
+    return (dist);
+}
+'''
+def dist(city1,city2):
+    theta=city1[0]-city2[0]
+    dist=math.sin(math.radians(city1[1]))*math(math.radians(city2[1]))+math.cos(math.radians(city1[1]))*math.cos(math.radians(city2[1]))*math.cos(theta)
+    dist=math.acos(dist)
+    dist=math.degrees(dist)
+    dist=dist*60*1.1515
+    dist=dist*1609344
+    return dist
+
+
 def distance_matrix(cities):
     num=len(cities)
     matrix=np.zeros((num,num))
     for i in range(num):
         for j in range(i+1,num):
-            matrix[i][j]=(sum(cities[i]-cities[j])**2)**0.5
+            matrix[i][j]=dist(cities[i],cities[j])
             matrix[j][i]=matrix[i][j]
     return matrix
 
