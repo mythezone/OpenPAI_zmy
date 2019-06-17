@@ -10,19 +10,22 @@ nodes=10
 #time.sleep(3)
 print("Detection started!")
 while True:
-    #f=wait_hdfs_file(work_path,'new_job.npy',delete=False)
-    f2=wait_hdfs_file(work_path,'cities.npy',delete=False)
-    #cities_file=to.wait_msg_file(work_path,'new_job.txt',delete=True)
-    cities=np.load(f2)
+    f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
+    print("start job!!")
+    #f2=wait_hdfs_file(work_path,'cities.npy',delete=False)
+    # print("cities data has been read.")
+    # #cities_file=to.wait_msg_file(work_path,'new_job.txt',delete=True)
+    # cities=np.load(f2)
 
     #cities=to.wait_np_file(work_path,cities_file,delete=False)
     #to.clean_work_path(work_path)
-    print("calculating distance matrix...")
-    dist=tc.distance_matrix(cities)
-    print("saving file to the HDFS...")
-    hdfs_save(work_path,'distance_matrix.npy',dist)
-    #to.set_np_file(work_path,'distance_matrix.npy',dist)
-    num=len(cities)
+    # print("calculating distance matrix...")
+    # dist=tc.distance_matrix(cities)
+    # print("saving file to the HDFS...")
+    # hdfs_save(work_path,'distance_matrix.npy',dist)
+    # #to.set_np_file(work_path,'distance_matrix.npy',dist)
+    dist=np.load(f)
+    num=len(dist)
     population=10
     
     generations=[]
