@@ -3,15 +3,18 @@ import os_file as to
 import iteration as it
 import numpy as np
 import time,os,sys
+from pai_pyhdfs import *
 from pyspark.context import SparkContext
 sc=SparkContext()
 
 max_time=30*60
 max_iter=10000
 threshold=10.0
-work_path='/shared/work/'
+work_path='/shared/TSP/'
 print("waiting for the matrix.")
-m=to.wait_np_file(work_path,'distance_matrix.npy',delete=False)
+f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
+m=np.load(f)
+#m=to.wait_np_file(work_path,'distance_matrix.npy',delete=False)
 
 
 
@@ -27,7 +30,9 @@ def get_res(s1,s2):
 print("start work.")
 
 while True:
-    generations=to.wait_np_file(work_path,'generations.npy',delete=True)
+    f=wait_hdfs_file(work_path,'generations.npy',delete=True)
+    generations=np.load(f)
+    #generations=to.wait_np_file(work_path,'generations.npy',delete=True)
     print("generation information getted. Now setting the gen_rdd.")
     gen_rdd=sc.parallelize(generations)
     print("rdd setted,now maping.")
@@ -37,7 +42,8 @@ while True:
     print("The best solution is:",res2)
     c=tc.cost(res2,m)
     print("The lowest cost is :",c)
-    to.set_np_file(work_path,'final_solution.npy',[res2,c])
+    hdfs_save(work_path,'final_solution.npy',[res2,c])
+    #to.set_np_file(work_path,'final_solution.npy',[res2,c])
 
 
     # msg=to.wait_np_file_start(work_path,'solution',delete=True)

@@ -4,7 +4,7 @@ import numpy as np
 import time
 from pai_pyhdfs import *
 
-work_path='/shared/work/'
+work_path='/shared/TSP/'
 nodes=10
 
 time.sleep(3)
