@@ -10,7 +10,7 @@ nodes=10
 #time.sleep(3)
 print("Detection started!")
 while True:
-    f=wait_hdfs_file(work_path,'new_job.npy',delete=False)
+    #f=wait_hdfs_file(work_path,'new_job.npy',delete=False)
     f2=wait_hdfs_file(work_path,'cities.npy',delete=False)
     #cities_file=to.wait_msg_file(work_path,'new_job.txt',delete=True)
     cities=np.load(f2)
