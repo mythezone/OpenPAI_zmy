@@ -55,7 +55,7 @@ def iteration(solutions,max_iteration=100,max_time=180):
         time_escaped=time.time()-start
         #print("This is the %d-th iteration."%iter)
         #print("solutions[0]",solutions[0])
-    print("This iteration is over.")
+    #print("This iteration is over.")
     return solutions[0]
 
 
