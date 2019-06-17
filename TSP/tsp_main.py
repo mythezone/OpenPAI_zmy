@@ -9,7 +9,7 @@ time.sleep(3)
 
 while True:
     cities_file=to.wait_msg_file(work_path,'new_job.txt',delete=True)
-    cities=to.wait_np_file(work_path,cities_file,delete=True)
+    cities=to.wait_np_file(work_path,cities_file,delete=False)
     to.clean_work_path(work_path)
     dist=tc.distance_matrix(cities)
     to.set_np_file(work_path,'distance_matrix.npy',dist)
