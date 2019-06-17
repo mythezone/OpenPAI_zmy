@@ -14,12 +14,6 @@ work_path='/shared/TSP/'
 print("waiting for the matrix.")
 f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
 m=np.load(f)
-#m=to.wait_np_file(work_path,'distance_matrix.npy',delete=False)
-
-
-
-dic=dict()
-final_res=[]
 
 def get_res(s1,s2):
     if tc.cost(s1,m)<tc.cost(s2,m):
@@ -30,9 +24,8 @@ def get_res(s1,s2):
 print("start work.")
 
 while True:
-    f=wait_hdfs_file(work_path,'generations.npy',delete=True)
+    f=wait_hdfs_file(work_path,'generations.npy',delete=False)
     generations=np.load(f)
-    #generations=to.wait_np_file(work_path,'generations.npy',delete=True)
     print("generation information getted. Now setting the gen_rdd.")
     gen_rdd=sc.parallelize(generations)
     print("rdd setted,now maping.")
