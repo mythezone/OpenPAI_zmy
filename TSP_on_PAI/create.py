@@ -7,7 +7,7 @@ from pai_pyhdfs import *
 
 
 work_path='/shared/TSP/'
-hdfs_init_fold(work_path)
+# hdfs_init_fold(work_path)
 
 
 def create_city(low=0,up=90):
