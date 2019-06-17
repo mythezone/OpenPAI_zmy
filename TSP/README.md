@@ -21,6 +21,14 @@
 3. The 'tsp_loop.py' program will read the solutions and map them to the spark nodes for iteration. And reduce the result to get the best route of this TSP(save in file).
 4. The 'main.py' will read the best route and print the information.Then waiting for the next job until exit manually.
 
+## Details of iteration:
+
+1. The individual of the map function is the routes (size of population.)
+2. Every two different route in the individual will crossover with the rest routes.(So we get n*(n-1) children).
+3. All the children will mutate by swapping random two cities.
+4. All the children will be added into the individual and sorted by the cost.(n*n routes in order.)
+5. Select the first population size routes as the next generation.
+
 ## How to use this codes:
 
 ```bash
