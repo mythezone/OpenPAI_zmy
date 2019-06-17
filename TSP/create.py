@@ -1,19 +1,19 @@
 import numpy as np
 import os,sys
 import os_file as tos
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import math
 
 
 work_path='./work/'
 
-def create_city(low=0,up=100):
+def create_city(low=0,up=90):
     x=np.random.uniform(low,up,2)
     return x
 
+
 def create_cities(num=100):
-    cities=np.random.uniform(0,100,(num,2))
-    
+    cities=np.random.uniform(0,90,(num,2))
     return cities
 
 def save_data(num=100):
@@ -39,13 +39,14 @@ private double distance(final double lat1, final double lon1, final double lat2,
     return (dist);
 }
 '''
+
 def dist(city1,city2):
     theta=city1[0]-city2[0]
-    dist=math.sin(math.radians(city1[1]))*math(math.radians(city2[1]))+math.cos(math.radians(city1[1]))*math.cos(math.radians(city2[1]))*math.cos(theta)
+    dist=math.sin(math.radians(city1[1]))*math.sin(math.radians(city2[1]))+math.cos(math.radians(city1[1]))*math.cos(math.radians(city2[1]))*math.cos(theta)
     dist=math.acos(dist)
     dist=math.degrees(dist)
     dist=dist*60*1.1515
-    dist=dist*1609344
+    dist=dist*1.609344
     return dist
 
 
@@ -95,6 +96,7 @@ def mutation_2(solution):
     return solution
 
 if __name__=="__main__":
+    tos.clean_work_path(work_path)
     cities=create_cities(100)
     tos.set_np_file(work_path,'cities.npy',cities)
     with open(work_path+'new_job.txt','w') as ff:
