@@ -102,8 +102,9 @@ if __name__=="__main__":
     #tos.clean_work_path(work_path)
     cities=create_cities(100)
     hdfs_save(work_path,'cities.npy',cities)
-    file_name='new_job.txt'
-    with open(file_name,'w') as ff:
-        ff.write('cities.npy')
-    hdfs_set_file('./',work_path,file_name)
+    hdfs_save(work_path,'new_job.npy',[1])
+    # file_name='new_job.txt'
+    # with open(file_name,'w') as ff:
+    #     ff.write('cities.npy')
+    # hdfs_set_file('./',work_path,file_name)
     

@@ -10,9 +10,10 @@ nodes=10
 time.sleep(3)
 
 while True:
-    f=wait_hdfs_file(work_path,'new_job.txt',delete=True)
+    f=wait_hdfs_file(work_path,'new_job.npy',delete=True)
+    f2=wait_hdfs_file(work_path,'cities.npy',delete=False)
     #cities_file=to.wait_msg_file(work_path,'new_job.txt',delete=True)
-    cities=np.load(f)
+    cities=np.load(f2)
 
     #cities=to.wait_np_file(work_path,cities_file,delete=False)
     #to.clean_work_path(work_path)
