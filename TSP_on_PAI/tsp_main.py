@@ -10,7 +10,10 @@ nodes=10
 #time.sleep(3)
 print("Detection started!")
 while True:
-    f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
+    print("In the loop.")
+    #f=hdfs_get_file(work_path,'distance_matrix.npy','./',delete=False)
+    #f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
+    dist=hdfs_load(work_path,'distance_matrix.npy')
     print("start job!!")
     #f2=wait_hdfs_file(work_path,'cities.npy',delete=False)
     # print("cities data has been read.")
@@ -24,7 +27,7 @@ while True:
     # print("saving file to the HDFS...")
     # hdfs_save(work_path,'distance_matrix.npy',dist)
     # #to.set_np_file(work_path,'distance_matrix.npy',dist)
-    dist=np.load(f)
+    
     num=len(dist)
     population=10
     
