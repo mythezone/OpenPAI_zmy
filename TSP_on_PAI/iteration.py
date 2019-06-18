@@ -2,7 +2,7 @@ import create as tc
 import os_file as to
 import numpy as np
 import time
-from pai_pyhdfs import *
+#from pai_pyhdfs import *
 
 work_path='/shared/TSP/'
 # f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
