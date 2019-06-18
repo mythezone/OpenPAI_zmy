@@ -4,11 +4,16 @@ import iteration as it
 import numpy as np
 import time,os,sys
 from pai_pyhdfs import *
-from pyspark.context import SparkContext
-
+#from pyspark.context import SparkContext
+from pyspark.sql import SparkSession
 
 #-------------initiation-------------#
-sc=SparkContext()
+# sc=SparkContext()
+
+spark=SparkSession\
+    .builder\
+        .appName("Demo2")\
+            .getOrCreate()
 
 max_time=30*60
 max_iter=10000
@@ -31,7 +36,7 @@ while True:
     f=wait_hdfs_file(work_path,'generations.npy',delete=False)
     generations=np.load(f)
     print("generation information getted. Now setting the gen_rdd.")
-    gen_rdd=sc.parallelize(generations)
+    gen_rdd=spark.sparkContext.parallelize(generations)
     print("rdd setted,now maping.")
     res=gen_rdd.map(lambda x:it.iteration(x,m))
     print("mapping over,now reducing.")
