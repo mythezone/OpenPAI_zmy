@@ -22,6 +22,9 @@ def get_res(s1,s2):
         return s1
     else:
         return s2
+
+def map_func(x):
+    return it.iteration(x,m)
 #------------initiation over---------#
 
 while True:
@@ -30,7 +33,7 @@ while True:
     print("generation information getted. Now setting the gen_rdd.")
     gen_rdd=sc.parallelize(generations)
     print("rdd setted,now maping.")
-    res=gen_rdd.map(it.iteration)
+    res=gen_rdd.map(map_func)
     print("mapping over,now reducing.")
     res2=res.reduce(get_res)
     print("The best solution is:",res2)

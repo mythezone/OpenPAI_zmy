@@ -10,7 +10,7 @@ population=10
 
 while True:
     print("in the loop")
-    f=wait_hdfs_file(work_path,'new_job.npy',delete=True)  #wait a start signal file.This line has some unknow bug in the last edition.
+    f=wait_hdfs_file(work_path,'new_job.npy',delete=True)  #wait a start signal file.
     ff=wait_hdfs_file(work_path,'cities.npy',delete=False)  # wait problem discribe file.
     cities=np.load(ff)
     print("calculating distance matrix...")

@@ -5,7 +5,7 @@ import time
 from pai_pyhdfs import *
 
 work_path='/shared/TSP/'
-f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
+#f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
 m=np.load(f)
 
 def cross(s1,s2):
