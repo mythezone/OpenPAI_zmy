@@ -1,7 +1,7 @@
 import sys
 from random import random
 from operator import add
-import pyhdfs
+
 from pyspark.sql import SparkSession
 
 
@@ -13,7 +13,7 @@ if __name__ == "__main__":
         .builder\
         .appName("PythonPi")\
         .getOrCreate()
-
+    import pai_pyhdfs
     partitions = int(sys.argv[1]) if len(sys.argv) > 1 else 2
     n = 100000 * partitions
 
