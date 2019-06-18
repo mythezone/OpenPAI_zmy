@@ -1,7 +1,7 @@
 import sys
 from random import random
 from operator import add
-from pai_pyhdfs import *
+import pyhdfs
 from pyspark.sql import SparkSession
 
 
