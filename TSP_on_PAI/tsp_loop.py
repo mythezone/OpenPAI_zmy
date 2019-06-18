@@ -7,7 +7,7 @@ from pai_pyhdfs import *
 #from pyspark.context import SparkContext
 
 #-------------initiation-------------#
-sc=SparkContext()
+#sc=SparkContext()
 
 max_time=30*60
 max_iter=10000
@@ -34,8 +34,8 @@ while True:
     #res=gen_rdd.map(lambda x:it.iteration(x,m))
     print("mapping over,now reducing.")
     #res2=res.reduce(get_res)
-    print("The best solution is:",res2)
+    #print("The best solution is:",res2)
     #c=tc.cost(res2,m)
-    print("The lowest cost is :",c)
+    #print("The lowest cost is :",c)
     #hdfs_save(work_path,'final_solution.npy',[res2,c])
 
