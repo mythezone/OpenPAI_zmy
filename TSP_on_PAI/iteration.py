@@ -49,7 +49,9 @@ def iteration(solutions,max_iteration=100,max_time=180):
     start=time.time()
     time_escaped=0
     iter=0
-    while iter<max_iteration and time_escaped<max_time:
+    while iter<max_iteration:
+        if time_escaped>max_time:
+            break
         solutions=next_generation(solutions)
         iter+=1
         time_escaped=time.time()-start
