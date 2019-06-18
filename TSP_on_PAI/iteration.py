@@ -5,8 +5,8 @@ import time
 from pai_pyhdfs import *
 
 work_path='/shared/TSP/'
-#f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
-#m=np.load(f)
+# f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
+# m=np.load(f)
 
 def cross(s1,s2):
     length=len(s1)
@@ -45,14 +45,12 @@ def next_generation(solutions,matrix):
     sorted_solutions=sorted(solutions,key=lambda x:tc.cost(x,matrix))[:length]
     return np.array(sorted_solutions)
 
-def iteration(solutions,max_iteration=100,max_time=180):
+def iteration(solutions,matrix,max_iteration=100,max_time=180):
     start=time.time()
     time_escaped=0
     iter=0
-    while iter<max_iteration:
-        if time_escaped>max_time:
-            break
-        solutions=next_generation(solutions)
+    while iter<max_iteration and time_escaped>max_time:
+        solutions=next_generation(solutions,matrix)
         iter+=1
         time_escaped=time.time()-start
         #print("This is the %d-th iteration."%iter)
