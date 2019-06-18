@@ -1,0 +1,33 @@
+{
+    "jobName": "demo2-tsp",
+    "image": "registry.cn-hangzhou.aliyuncs.com/lgy_sustech/spark:v1",
+    "virtualCluster": "default",
+    "taskRoles": [
+      {
+        "name": "create_job",
+        "taskNumber": 1,
+        "cpuNumber": 2,
+        "memoryMB": 8192,
+        "gpuNumber": 0,
+        "command": "git clone https://github.com/mythezone/OpenPAI_zmy.git   && cd OpenPAI_zmy/TSP_on_PAI &&  python3 create.py "
+      },
+      {
+        "name": "tsp_main",
+        "taskNumber": 1,
+        "cpuNumber": 2,
+        "memoryMB": 8192,
+        "gpuNumber": 0,
+        "command": "git clone https://github.com/mythezone/OpenPAI_zmy.git   && cd OpenPAI_zmy/TSP_on_PAI  &&  python3 tsp_main.py "
+      },
+      {
+        "name": "convert",
+        "taskNumber": 1,
+        "cpuNumber": 1,
+        "memoryMB": 2048,
+        "gpuNumber": 0,
+        "command": "git clone https://github.com/mythezone/OpenPAI_zmy.git   && cd OpenPAI_zmy/TSP_on_PAI  &&  spark-submit --master local[4] tsp_loop.py",
+        "shmMB": 64,
+        "minFailedTaskCount": 1
+      }
+    ]
+  }

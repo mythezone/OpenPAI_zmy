@@ -15,7 +15,7 @@ threshold=10.0
 work_path='/shared/TSP/'
 print("waiting for the matrix.")
 f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
-m=np.load(f) #save distance_matrix in m.
+m=np.load(f,allow_pickle=True) #save distance_matrix in m.
 
 def get_res(s1,s2):
     if tc.cost(s1,m)<tc.cost(s2,m):

@@ -12,7 +12,7 @@ while True:
     print("in the loop")
     f=wait_hdfs_file(work_path,'new_job.npy',delete=True)  #wait a start signal file.
     ff=wait_hdfs_file(work_path,'cities.npy',delete=False)  # wait problem discribe file.
-    cities=np.load(ff)
+    cities=np.load(ff,allow_pickle=True)
     print("calculating distance matrix...")
     dist=tc.distance_matrix(cities)
     print("saving file to the HDFS...")
@@ -30,7 +30,7 @@ while True:
 
     # wait for result and output it.Wati for next job.
     ff=wait_hdfs_file(work_path,'final_solution.npy',delete=True)
-    msg,c=np.load(ff)
+    msg,c=np.load(ff,allow_pickle=True)
     print("The final result of this TSP is : ",msg)
     print("The minimum cost of this problem is : ",c)
     print("waiting for the next job!")
