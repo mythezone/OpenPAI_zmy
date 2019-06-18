@@ -10,14 +10,7 @@ max_iter=10000
 threshold=10.0
 work_path='/shared/TSP/'
 print("waiting for the matrix.")
-f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
-m=np.load(f,allow_pickle=True) #save distance_matrix in m.
 
-def get_res(s1,s2):
-    if tc.cost(s1,m)<tc.cost(s2,m):
-        return s1
-    else:
-        return s2
 
 #------------initiation over---------#
 
@@ -27,6 +20,7 @@ if __name__=="__main__":
         .builder\
         .appName("Demo2")\
         .getOrCreate()
+    
 
     import create as tc
     import os_file as to
@@ -35,6 +29,15 @@ if __name__=="__main__":
     import time,os,sys
     from pai_pyhdfs import wait_hdfs_file,hdfs_save
 
+    f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
+    m=np.load(f,allow_pickle=True) #save distance_matrix in m.
+
+    def get_res(s1,s2):
+        if tc.cost(s1,m)<tc.cost(s2,m):
+            return s1
+        else:
+            return s2
+            
     while True:
         f=wait_hdfs_file(work_path,'generations.npy',delete=False)
         generations=np.load(f)
