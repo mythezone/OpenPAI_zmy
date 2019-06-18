@@ -25,7 +25,7 @@
         "cpuNumber": 1,
         "memoryMB": 2048,
         "gpuNumber": 0,
-        "command": "git clone https://github.com/mythezone/OpenPAI_zmy.git   && cd OpenPAI_zmy/TSP_on_PAI  &&  spark-submit --master local[4] tsp_loop.py",
+        "command": "git clone https://github.com/mythezone/OpenPAI_zmy.git   && cd OpenPAI_zmy/TSP_on_PAI  &&  spark-submit --master yarn tsp_loop.py",
         "shmMB": 64,
         "minFailedTaskCount": 1
       }
