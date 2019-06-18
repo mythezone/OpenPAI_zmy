@@ -4,7 +4,7 @@ import iteration as it
 import numpy as np
 import time,os,sys
 from pai_pyhdfs import *
-from pyspark.context import SparkContext
+#from pyspark.context import SparkContext
 
 #-------------initiation-------------#
 sc=SparkContext()
@@ -29,13 +29,13 @@ while True:
     f=wait_hdfs_file(work_path,'generations.npy',delete=False)
     generations=np.load(f)
     print("generation information getted. Now setting the gen_rdd.")
-    gen_rdd=sc.parallelize(generations)
+    #gen_rdd=sc.parallelize(generations)
     print("rdd setted,now maping.")
-    res=gen_rdd.map(lambda x:it.iteration(x,m))
+    #res=gen_rdd.map(lambda x:it.iteration(x,m))
     print("mapping over,now reducing.")
-    res2=res.reduce(get_res)
+    #res2=res.reduce(get_res)
     print("The best solution is:",res2)
-    c=tc.cost(res2,m)
+    #c=tc.cost(res2,m)
     print("The lowest cost is :",c)
-    hdfs_save(work_path,'final_solution.npy',[res2,c])
+    #hdfs_save(work_path,'final_solution.npy',[res2,c])
 

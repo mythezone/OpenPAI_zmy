@@ -1,4 +1,4 @@
-现在碰到一个问题.关于TSP的demo已经可以在PAI上运行(spark的local模式下).但是如果spark的--master设置为yarn就会出现
+现在碰到一个问题.关于TSP的demo已经可以在PAI上运行(spark的local模式下).但是如果spark的--master设置为yarn就会出现这个错误.
 ```
 2019-06-18 08:53:24 INFO  Client:54 - Application report for application_1558351089344_0243 (state: FAILED)
 2019-06-18 08:53:24 INFO  Client:54 - 
@@ -8,7 +8,7 @@ Failing this attempt.Diagnostics: [2019-06-18 08:53:21.308]Exception from contai
 ExitCodeException exitCode=13: Error: No such object: container_e14_1558351089344_0243_02_000001
 Error: No such object: container_e14_1558351089344_0243_02_000001
 ```
-这个错误.
+请问你们之前有没有碰到过这个问题?有什么解决的办法?
 
 主要任务配置如下:
 ```
@@ -48,4 +48,3 @@ spark-submit --master yarn --deploy-mode cluster --driver-memory 5g --executor-m
 
 在这个ACCEPTED状态一直等待到出现ERROR.
 
-请问你们之前有没有碰到过这个问题?有什么解决的办法?
