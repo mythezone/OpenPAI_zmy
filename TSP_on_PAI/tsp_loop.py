@@ -1,6 +1,7 @@
 #from pyspark.context import SparkContext
 from pyspark.sql import SparkSession
-
+import numpy as np
+import time,os,sys
 #-------------initiation-------------#
 # sc=SparkContext()
 
@@ -25,8 +26,7 @@ if __name__=="__main__":
     import create as tc
     import os_file as to
     import iteration as it
-    import numpy as np
-    import time,os,sys
+
     from pai_pyhdfs import wait_hdfs_file,hdfs_save
 
     f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
@@ -37,7 +37,7 @@ if __name__=="__main__":
             return s1
         else:
             return s2
-            
+
     while True:
         f=wait_hdfs_file(work_path,'generations.npy',delete=False)
         generations=np.load(f)
