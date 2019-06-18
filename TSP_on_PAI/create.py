@@ -30,19 +30,6 @@ def load_data(filepath):
     cities=np.load(filepath)
     return cities
 
-'''
-private double distance(final double lat1, final double lon1, final double lat2, final double lon2) {
-    final double theta = lon1 - lon2;
-    double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
-    dist = Math.acos(dist);
-    dist = rad2deg(dist);
-    dist = dist * 60 * 1.1515;
-
-    dist = dist * 1.609344;
-    return (dist);
-}
-'''
-
 def dist(city1,city2):
     theta=city1[0]-city2[0]
     dist=math.sin(math.radians(city1[1]))*math.sin(math.radians(city2[1]))+math.cos(math.radians(city1[1]))*math.cos(math.radians(city2[1]))*math.cos(theta)

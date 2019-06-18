@@ -7,9 +7,6 @@ from pai_pyhdfs import *
 work_path='/shared/TSP/'
 f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
 m=np.load(f)
-#m=to.wait_np_file(work_path,'distance_matrix.npy')
-
-
 
 def cross(s1,s2):
     length=len(s1)
