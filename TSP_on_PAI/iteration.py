@@ -6,7 +6,7 @@ from pai_pyhdfs import *
 
 work_path='/shared/TSP/'
 #f=wait_hdfs_file(work_path,'distance_matrix.npy',delete=False)
-m=np.load(f)
+#m=np.load(f)
 
 def cross(s1,s2):
     length=len(s1)
@@ -31,7 +31,7 @@ def cross_and_mutation(s1,s2):
     return mutation(child)
 
 
-def next_generation(solutions,matrix=m):
+def next_generation(solutions,matrix):
     length=len(solutions)
     tmp=[]
     for i in range(length):
