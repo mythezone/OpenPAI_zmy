@@ -1,14 +1,11 @@
 import numpy as np
 import os,sys
 import os_file as tos
-#import matplotlib.pyplot as plt
 import math
 from pai_pyhdfs import *
 
 
 work_path='/shared/TSP/'
-# hdfs_init_fold(work_path)
-
 
 def create_city(low=0,up=90):
     x=np.random.uniform(low,up,2)
@@ -38,7 +35,6 @@ def dist(city1,city2):
     dist=dist*60*1.1515
     dist=dist*1.609344
     return dist
-
 
 def distance_matrix(cities):
     num=len(cities)
@@ -85,15 +81,14 @@ def mutation_2(solution):
     solution[end-1]=k
     return solution
 
+
+#-----used for create a new TSP------------#
 if __name__=="__main__":
     #tos.clean_work_path(work_path)
     cities=create_cities(100)
-    #hdfs_save(work_path,'cities.npy',cities)
+    hdfs_save(work_path,'cities.npy',cities)
     hdfs_save(work_path,'new_job.npy',[1])
-    print("calculating distance matrix...")
-    dist=distance_matrix(cities)
-    print("saving file to the HDFS...")
-    hdfs_save(work_path,'distance_matrix.npy',dist)
+
     # file_name='new_job.txt'
     # with open(file_name,'w') as ff:
     #     ff.write('cities.npy')

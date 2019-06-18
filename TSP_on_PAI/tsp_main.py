@@ -8,9 +8,17 @@ nodes=10
 num=100
 population=10
 
-print("Detection started!")
 while True:
-    print("In the loop.")
+    print("in the loop")
+    f=wait_hdfs_file(work_path,'new_job.npy',delete=True)  #wait a start signal file.This line has some unknow bug in the last edition.
+    ff=wait_hdfs_file(work_path,'cities.npy',delete=False)  # wait problem discribe file.
+    cities=np.load(ff)
+    print("calculating distance matrix...")
+    dist=tc.distance_matrix(cities)
+    print("saving file to the HDFS...")
+    hdfs_save(work_path,'distance_matrix.npy',dist)
+
+    #generate the total solutions and save it on the hdfs.
     generations=[]
     print("generate the solution of routes.")
     for i in range(nodes):
@@ -20,6 +28,7 @@ while True:
     hdfs_save(work_path,'generations.npy',generations)
     print("solution file setting over.waiting for results.")
 
+    # wait for result and output it.Wati for next job.
     ff=wait_hdfs_file(work_path,'final_solution.npy',delete=True)
     msg,c=np.load(ff)
     print("The final result of this TSP is : ",msg)
