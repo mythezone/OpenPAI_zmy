@@ -5,6 +5,7 @@ import sys,os,time
 from io import BytesIO
 import base64
 import create as cr
+import json
 
 
 class server(Thread):
@@ -27,10 +28,10 @@ class server(Thread):
         while True:
             conn,addr=self.s.accept()
             print('Connect with:',addr)
-            data=conn.recv(4096)
+            data=conn.recv(8192)
             #arr=np.loadtxt(BytesIO(data))
             msg=self.work(data)
-            print('recv:',data.decode())
+            #print('recv:',data.decode())
             #msg='This is a message from the server!'
             conn.send(msg)
 
@@ -52,8 +53,10 @@ class client(Thread):
         #msg=np.random.uniform(size=(4,4))
         self.client.send(self.msg)
         data=self.client.recv(1024)
-        print('recv:',data.decode())
+        #print('recv:',data.decode())
         self.client.close()
+
+
 
 val_lock=Lock()
 
@@ -72,12 +75,13 @@ def save_route(msg,route):
     except:
         print("The port of %s is inavailable!"%msg[0])
 
-    print(msg)
-    print(route)
     return 'route updated!'.encode()
 
-def process(msg):
-    print(msg.decode())
+def process(msg,route):
+    statu,msg=eval(msg.decode())
+    #msg=eval(msg.decode())
+    print("statu:",statu)
+    print('msg:',msg)
     return 'recieved your work!'.encode()
 
 
@@ -94,11 +98,17 @@ if __name__=="__main__":
     # for i in range(population):
     #     routes=cr.init_solutions(population,num)
     #     generations.append(routes)
-
+    job_proc=[]
+    algo_proc=[]
+    with open("task_config.json",'r') as f:
+        job_proc=json.loads(f.read())
+        algo_proc=job_proc['process']
+    print(algo_proc)
+        
 
     route=dict()
     s=server(work=lambda x:save_route(x,route=route))
-    s2=server(port=50012,work=process)
+    s2=server(port=50012,work=lambda x:process(x,route=route))
     s2.start()
     s.start()
     s.join()
