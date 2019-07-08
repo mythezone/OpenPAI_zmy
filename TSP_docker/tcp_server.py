@@ -17,6 +17,7 @@ if __name__=="__main__":
     s.tcp_servier.listen(5)
 
     while True:
+        print("Start listen:")
         conn,addr=s.tcp_servier.accept()
         print("conn:",conn,"\naddr:",addr)
         while True:
