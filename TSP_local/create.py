@@ -1,8 +1,7 @@
 import numpy as np
 import os,sys
-import os_file as tos
-#import matplotlib.pyplot as plt
 import math
+
 
 
 work_path='./work/'
@@ -10,6 +9,7 @@ work_path='./work/'
 def create_city(low=0,up=90):
     x=np.random.uniform(low,up,2)
     return x
+
 
 def create_cities(num=100):
     cities=np.random.uniform(0,90,(num,2))
@@ -34,7 +34,6 @@ def dist(city1,city2):
     dist=dist*60*1.1515
     dist=dist*1.609344
     return dist
-
 
 def distance_matrix(cities):
     num=len(cities)
@@ -81,10 +80,15 @@ def mutation_2(solution):
     solution[end-1]=k
     return solution
 
+
+#-----used for create a new TSP------------#
 if __name__=="__main__":
-    tos.clean_work_path(work_path)
+    #tos.clean_work_path(work_path)
     cities=create_cities(100)
-    tos.set_np_file(work_path,'cities.npy',cities)
-    with open(work_path+'new_job.txt','w') as ff:
-        ff.write('cities.npy')
+    np.save(work_path+'cities.npy',cities)
+
+    # file_name='new_job.txt'
+    # with open(file_name,'w') as ff:
+    #     ff.write('cities.npy')
+    # hdfs_set_file('./',work_path,file_name)
     
