@@ -7,7 +7,7 @@ import base64
 import json
 
 
-class msg:
+class message:
     '''
     "901":"string",
     "902":"list",
@@ -15,6 +15,8 @@ class msg:
     "904":"file"
     '''
     def __init__(self,statu,content):
+        self.statu=statu
+        self.content=content
         self.m=[statu,content]
 
     def msg_encode(self):
@@ -29,6 +31,9 @@ class msg:
         else:
             print("check your msg type!")
         return content
+
+    def show(self):
+        print('statu: ',self.m[0],'; content: ',self.m[1])
 
 
 class client(Thread):
@@ -82,15 +87,17 @@ class messager:
     def __init__(self):
         self.client=socket.socket()
 
-    def send_to(self,msg,host='localhost',port=50001,msg_type='list'):
+    def send_to(self,msg,host='localhost',port=50001):
         addr=(host,port)
         self.client.connect(addr)
-        msg=msg_encode(msg)
-        self.client.send(msg)
-        self.recv=self.client.recv(8192)
-        #print('recv : ',self.recv.decode())
+        content=msg.msg_encode()
+        self.client.send(content)
+        self.recv=self.client.recv(8192).decode()
+        statu,content=eval(self.recv)
+        recv_msg=message(statu,content)
+        recv_msg.show()
         self.client.close()
-        return self.recv
+        return recv_msg
 
 
 class server(Thread):
@@ -98,7 +105,6 @@ class server(Thread):
         Thread.__init__(self)
         print("init the server on port %d."%port)
         self.s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        # port=np.random.randint(50000,59999)
         self.addr=addr
         self.port=port
         try:
@@ -112,30 +118,31 @@ class server(Thread):
         while True:
             conn,addr=self.s.accept()
             print('Connect with:',addr)
-            data=conn.recv(8192)
-            #arr=np.loadtxt(BytesIO(data))
-            msg=self.work(data)
-            #print('recv:',data.decode())
-            #msg='This is a message from the server!'
+            data=conn.recv(8192).decode()
+            statu,content=eval(data) 
+            msg=message(statu,content)         
+            msg=self.work(msg)
             conn.send(msg)
 
 
 def process(msg,route,algo,msgr):
-    statu,msg=eval(msg.decode())
-    statu=str(statu)
     
-    print("statu:",statu,'msg:',msg)
+    statu=msg.statu
+    content=msg.content
+    print("statu:",statu,'msg:',content)
 
     # process for different status
-    if statu=='101':
-        route[msg[0]]=msg[1]
+    if statu==101:
+        route[content[0]]=content[1]
         print("One worker is ready.")
 
-        if msg[0]=='init':
-            strt='begin'
-            msgr.send_to(strt,port=msg[1],msg_type='string')
+        if content[0]=='init':
+            print("prepare to send message to the init service.")
+            msg=message(666,'success in test')
+            tmp_recv=msgr.send_to(msg,port=content[1])
+            print(tmp_recv)
 
-        return "Port registed successfully.".encode()
+        return message(666,'success')
     else:
         while True:
             try:
@@ -146,7 +153,7 @@ def process(msg,route,algo,msgr):
                 time.sleep(2)
         print('the next port is %d'%next_port)
 
-    return str(next_port).encode()
+    return message(666,next_port)
 
 class master:
     def __init__(self,job_config='task_config.json'):
@@ -169,7 +176,7 @@ class worker:
         self.port=np.random.randint(50005,59999)
         self.work=work
         self.name=name
-        #self.msgr=messager()
+        self.msgr=messager()
         while True:
             try:
                 self.server=server(port=self.port,work=self.work)
@@ -177,14 +184,12 @@ class worker:
             except:
                 self.port=np.random.randint(50005,59999)
 
-        msg=[101,[self.name,self.port]]
-        self.port_reg=client(msg)
+        msg=message(101,[self.name,self.port])
+        msg=self.msgr.send_to(msg)
+        msg.show()
         
-
     def run(self):
-        self.port_reg.start()
         self.server.start()
-        self.port_reg.join()
         self.server.join()
 
 
