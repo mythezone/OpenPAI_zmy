@@ -31,7 +31,8 @@ class server(Thread):
             print('recv:',data.decode())
             msg='This is a message from the server!'
             conn.send(msg.encode())
-
+            recv=conn.recv(4096)
+            print('recv:',recv.decode())
 
 class client(Thread):
     def __init__(self,msg,host='localhost',port=50001):

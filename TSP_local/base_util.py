@@ -7,22 +7,33 @@ import base64
 import json
 
 
-'''
-master server for port registry is : 50001
-'''
+class msg:
+    '''
+    "901":"string",
+    "902":"list",
+    "903":"numpy",
+    "904":"file"
+    '''
+    def __init__(self,statu,content):
+        self.m=[statu,content]
 
-def port_check(port):
-    s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    try:
-        s.connect(('localhost',int(port)))
-        s.shutdown(2)
-        return True
-    except:
-        return False
+    def msg_encode(self):
+        return str(self.m).encode()
+    
+    def msg_decode(self,msg):
+        statu,content=eval(msg)
+        if statu==901:
+            return content
+        elif statu==902:
+            return content
+        else:
+            print("check your msg type!")
+        return content
 
-class client():
+
+class client(Thread):
     def __init__(self,msg,host='localhost',port=50001,msg_type='list'):
-        
+        Thread.__init__(self)
         print('init the client!')
         self.addr=(host,port)
         self.client=socket.socket()
@@ -39,9 +50,48 @@ class client():
     def run(self):
         self.client.connect(self.addr)
         self.client.send(self.msg)
-        data=self.client.recv(1024)
-        print('recv:',data.decode())
+        data=self.client.recv(8192)
+        self.next_port=data.decode()
+        print('recv:',self.next_port)
         self.client.close()
+
+def msg_encode(msg,msg_type='list'):
+    if msg_type=='list':
+        return str(msg).encode()
+    elif msg_type=='string':
+        return msg.encode()
+    elif msg_type=='numpy':
+        tmp=BytesIO()
+        np.savetxt(tmp,msg)
+        msg=tmp.getvalue()
+        return msg
+    else:
+        return 'not supported msg type(encode),plz check!'.encode()
+
+def msg_decode(msg,msg_type='list'):
+    if msg_type=='list':
+        return eval(msg.decode())
+    elif msg_type=='string':
+        return msg.decode()
+    elif msg_type=='numpy':
+        return np.loadtxt(msg)
+    else:
+        return 'not supported msg type(decode),plz check!'
+
+class messager:
+    def __init__(self):
+        self.client=socket.socket()
+
+    def send_to(self,msg,host='localhost',port=50001,msg_type='list'):
+        addr=(host,port)
+        self.client.connect(addr)
+        msg=msg_encode(msg)
+        self.client.send(msg)
+        self.recv=self.client.recv(8192)
+        #print('recv : ',self.recv.decode())
+        self.client.close()
+        return self.recv
+
 
 class server(Thread):
     def __init__(self,addr='localhost',port=50001,work=lambda x:x):
@@ -57,7 +107,6 @@ class server(Thread):
             print("bind error.")
         self.work=work
 
-
     def run(self):
         self.s.listen(5)
         while True:
@@ -70,26 +119,8 @@ class server(Thread):
             #msg='This is a message from the server!'
             conn.send(msg)
 
-def save_route(msg,route,val_lock):
-    '''
-    format of msg: ['name',port]
-    '''
-    msg=eval(msg.decode())
-    val_lock.acquire()
-    route[msg[0]]=msg[1]
-    val_lock.release()
-    #try to send message to the recieved port.
-    m='recieved the port of %s : %d'%(msg[0],msg[1])
-    try:
-        c=client(msg=m.encode(),port=msg[1])
-        c.start()
-        c.join()
-    except:
-        print("The port of %s is inavailable!"%msg[0])
 
-    return 'route updated!'.encode()
-
-def process(msg,route,algo):
+def process(msg,route,algo,msgr):
     statu,msg=eval(msg.decode())
     statu=str(statu)
     
@@ -99,6 +130,12 @@ def process(msg,route,algo):
     if statu=='101':
         route[msg[0]]=msg[1]
         print("One worker is ready.")
+
+        if msg[0]=='init':
+            strt='begin'
+            msgr.send_to(strt,port=msg[1],msg_type='string')
+
+        return "Port registed successfully.".encode()
     else:
         while True:
             try:
@@ -108,16 +145,8 @@ def process(msg,route,algo):
                 print("The port is not registed,pleas wait!")
                 time.sleep(2)
         print('the next port is %d'%next_port)
-        tmp_client=client(msg,port=next_port)
-        
-        #Try to send message to the distinct port.
-        while True:
-            try:
-                tmp_client.run()
-                break
-            except:
-                pass
-    return 'recieved your work!'.encode()
+
+    return str(next_port).encode()
 
 class master:
     def __init__(self,job_config='task_config.json'):
@@ -126,8 +155,8 @@ class master:
             self.algo_process=self.job_config['process']
         self.val_lock=Lock()
         self.route=dict()
-        #self.port_register=server(work=lambda x:save_route(x,route=self.route,val_lock=self.val_lock))
-        self.port_work=server(port=50001,work=lambda x:process(x,route=self.route,algo=self.algo_process))
+        self.msgr=messager()
+        self.port_work=server(port=50001,work=lambda x:process(x,route=self.route,algo=self.algo_process,msgr=self.msgr))
         
 
     def run(self):
@@ -140,6 +169,7 @@ class worker:
         self.port=np.random.randint(50005,59999)
         self.work=work
         self.name=name
+        #self.msgr=messager()
         while True:
             try:
                 self.server=server(port=self.port,work=self.work)
@@ -149,10 +179,12 @@ class worker:
 
         msg=[101,[self.name,self.port]]
         self.port_reg=client(msg)
-        self.port_reg.run()
+        
 
     def run(self):
+        self.port_reg.start()
         self.server.start()
+        self.port_reg.join()
         self.server.join()
 
 

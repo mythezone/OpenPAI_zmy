@@ -4,7 +4,17 @@
         "1":"loop",
         "2":"iteration",
         "3":"main",
+
         "101":"port_registry",
-        "911":"over"
+        "233":"work",
+        
+        "666":"success",
+        "667":"over",
+        "668":"error",
+
+        "901":"string",
+        "902":"list",
+        "903":"numpy",
+        "904":"file"
     }
 }
