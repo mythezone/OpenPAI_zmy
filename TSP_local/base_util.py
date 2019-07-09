@@ -5,6 +5,7 @@ import sys,os,time
 from io import BytesIO
 import base64
 import json
+from queue import Queue
 
 
 class message:
@@ -14,6 +15,7 @@ class message:
     "903":"numpy",
     "904":"file"
     '''
+
     def __init__(self,statu,content):
         self.statu=statu
         self.content=content
@@ -35,83 +37,53 @@ class message:
     def show(self):
         print('statu: ',self.m[0],'; content: ',self.m[1])
 
-
-class client(Thread):
-    def __init__(self,msg,host='localhost',port=50001,msg_type='list'):
-        Thread.__init__(self)
-        print('init the client!')
-        self.addr=(host,port)
-        self.client=socket.socket()
-
-        if msg_type=='string':
-            self.msg=msg.encode()
-        elif msg_type=='numpy':
-            tmp=BytesIO()
-            np.savetxt(tmp,msg)
-            self.msg=tmp.getvalue()
-        elif msg_type=='list':
-            self.msg=str(msg).encode() #self.msg must be encoded.
-        
-    def run(self):
-        self.client.connect(self.addr)
-        self.client.send(self.msg)
-        data=self.client.recv(8192)
-        self.next_port=data.decode()
-        print('recv:',self.next_port)
-        self.client.close()
-
-def msg_encode(msg,msg_type='list'):
-    if msg_type=='list':
-        return str(msg).encode()
-    elif msg_type=='string':
-        return msg.encode()
-    elif msg_type=='numpy':
-        tmp=BytesIO()
-        np.savetxt(tmp,msg)
-        msg=tmp.getvalue()
-        return msg
-    else:
-        return 'not supported msg type(encode),plz check!'.encode()
-
-def msg_decode(msg,msg_type='list'):
-    if msg_type=='list':
-        return eval(msg.decode())
-    elif msg_type=='string':
-        return msg.decode()
-    elif msg_type=='numpy':
-        return np.loadtxt(msg)
-    else:
-        return 'not supported msg type(decode),plz check!'
-
-class messager:
+class message_list:
     def __init__(self):
-        self.client=socket.socket()
+        self.lst=Queue()
+        self.lock=Lock()
 
-    def send_to(self,msg,host='localhost',port=50001):
-        addr=(host,port)
-        self.client.connect(addr)
-        content=msg.msg_encode()
-        self.client.send(content)
-        self.recv=self.client.recv(8192).decode()
-        statu,content=eval(self.recv)
-        recv_msg=message(statu,content)
-        recv_msg.show()
-        self.client.close()
-        return recv_msg
+    def add_msg(self,msg):
+        self.lock.acquire()
+        self.lst.put(msg)
+        self.lock.release()
+
+    def isEmpty(self):
+        return self.lst.empty()
+
+    def get_msg(self):
+        if self.lst.empty()==False:
+            self.lock.acquire()
+            k=self.lst.get()
+            self.lock.release()
+            return k
 
 
-class server(Thread):
-    def __init__(self,addr='localhost',port=50001,work=lambda x:x):
-        Thread.__init__(self)
+def send_to(msg,host='localhost',port=50001):
+    client=socket.socket()
+    addr=(host,port)
+    client.connect(addr)
+    content=msg.msg_encode()
+    client.send(content)
+    recv=client.recv(8192).decode()
+    statu,content=eval(recv)
+    recv_msg=message(statu,content)
+    recv_msg.show()
+    client.close()
+    return recv_msg
+        
+class server():
+    def __init__(self,msg_list,host='localhost',port=50001):
+        
         print("init the server on port %d."%port)
         self.s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.addr=addr
         self.port=port
+        self.msg_list=msg_list
         try:
             self.s.bind((self.addr,self.port))
         except:
             print("bind error.")
-        self.work=work
+            exit()
 
     def run(self):
         self.s.listen(5)
@@ -120,55 +92,45 @@ class server(Thread):
             print('Connect with:',addr)
             data=conn.recv(8192).decode()
             statu,content=eval(data) 
-            msg=message(statu,content)         
-            msg=self.work(msg)
-            conn.send(msg)
+            msg=message(statu,content)
+            
+            conn.send(message(669,'recved'))
+            self.msg_list.add_msg(msg)
 
-
-def process(msg,route,algo,msgr):
-    
-    statu=msg.statu
-    content=msg.content
-    print("statu:",statu,'msg:',content)
-
-    # process for different status
-    if statu==101:
-        route[content[0]]=content[1]
-        print("One worker is ready.")
-
-        if content[0]=='init':
-            print("prepare to send message to the init service.")
-            msg=message(666,'success in test')
-            tmp_recv=msgr.send_to(msg,port=content[1])
-            print(tmp_recv)
-
-        return message(666,'success')
-    else:
-        while True:
-            try:
+def process(msg_list,route,algo):
+    print("Message handle begin to work....")
+    while True:
+        if msg_list.isEmpty==False:
+            statu,content=msg_list.get_msg()
+            if statu==101:
+                route[content[0]]=content[1]
+            else:
                 next_port=route[algo[statu]]
-                break
-            except:
-                print("The port is not registed,pleas wait!")
-                time.sleep(2)
-        print('the next port is %d'%next_port)
+                msg=message(666,next_port)
+                send_to(msg,content)
 
-    return message(666,next_port)
+        else:
+            print("No msg now")
+            time.sleep(2)
+
 
 class master:
-    def __init__(self,job_config='task_config.json'):
+    def __init__(self,job_config='task_config.json',work=process):
         with open(job_config,'r') as f:
             self.job_config=json.loads(f.read())
             self.algo_process=self.job_config['process']
         self.val_lock=Lock()
         self.route=dict()
-        self.msgr=messager()
-        self.port_work=server(port=50001,work=lambda x:process(x,route=self.route,algo=self.algo_process,msgr=self.msgr))
+        
+        self.msg_list=message_list()
+        self.message_handle=Thread(name='msg_handle',target=server, args=(self.msg_list,'localhost',50001))
+        self.worker=Thread(name="worker",target=work,args=(self.msg_list,self.route,self.algo_process))
         
 
     def run(self):
-        self.port_work.start()
-        self.port_work.join()
+        self.message_handle.start()
+        self.worker.start()
+        
 
 class worker:
     def __init__(self,name,work):
@@ -176,21 +138,25 @@ class worker:
         self.port=np.random.randint(50005,59999)
         self.work=work
         self.name=name
-        self.msgr=messager()
+        self.msg_list=message_list()
+        
         while True:
             try:
-                self.server=server(port=self.port,work=self.work)
+                self.message_handle=Thread(name='msg_handle',target=server,agrs=(mself.msg_list,'localhost',self.port))
+                #self.worker=Thread(name="worker",target=work(msg_list=self.msg_list))
                 break
             except:
                 self.port=np.random.randint(50005,59999)
 
         msg=message(101,[self.name,self.port])
-        msg=self.msgr.send_to(msg)
-        msg.show()
+        send_to(msg)
+        time.sleep(1)
+        send_to(msg)
+        #self.msgr.recv.show()
         
     def run(self):
-        self.server.start()
-        self.server.join()
+        self.message_handle.start()
+        #self.worker.start()
 
 
 

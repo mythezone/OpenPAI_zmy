@@ -12,7 +12,6 @@ class init:
         self.population=population
         self.notes=notes
         self.cities=cr.create_cities(cities)
-        self.msgr=messager()
         self.wkr=worker('init',self.func)
 
     def func(self,msg):
@@ -22,17 +21,8 @@ class init:
         msg=message(666,'test success.')
         while True:
             try:
-                self.recv=self.msgr.send_to(msg)
-                self.recv.show()
-                # self.msgr.send_to(msg)
-                # c=bu.client(msg,msg_type='list')
-                # print("client has been initiated!")
-                # c.start()
-                # print('next_port:',c.next_port)
-                # c.join()
-                # #bu.send_msg(msg)
-                # msg=[233,cities]
-                # bu.send_msg(msg,port=c.next_port,msg_type='list')
+                self.msgr.send_to(msg)
+                #self.msgr.recv.show()
                 break
             except:
                 print("There is something wrong with the program.")
