@@ -3,6 +3,7 @@ from multiprocessing import Process
 import multiprocessing
 import json
 import time
+from array import array
 
 
 class master_work(Process):
@@ -16,8 +17,23 @@ class master_work(Process):
 
     def next_port(self,statu):
         name=self.algo[str(statu)]
-        port=self.route[name]
-        return port
+        try:
+            port=self.route[name]
+            return port
+        except:
+            print("The port has not been registed!")
+        # show_flag=True
+        # while True:
+        #     if name in self.route:
+        #         port=self.route[name]
+        #         break
+        #     else:
+        #         time.sleep(2)
+        #         if show_flag:
+        #             print("The server has not be registed!Plz wait!")
+        #             show_flag=False
+
+       
 
     def process(self,msg):
         statu,content=eval(msg.decode())

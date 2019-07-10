@@ -6,6 +6,7 @@ import time
 import create as cr
 
 
+
 class worker_work(Process):
     def __init__(self,msg_list,server_port):
         Process.__init__(self)
@@ -17,7 +18,7 @@ class worker_work(Process):
         new_msg=message(statu,content)
         return new_msg
 
-    def init_problem(self,population=10,nodes=10,cities=100):
+    def init_problem(self,cities=10):
         cities=cr.create_cities(cities)
         content=cities.tolist()
         return content
@@ -52,8 +53,11 @@ class worker_work(Process):
                 elif new_msg.statu==669:
                     print(new_msg.content)
                     
-                    msg=message(0,self.server_port)
+                    msg=message(1,self.server_port)
                     send_to(msg)
+                elif new_msg.statu==444:
+                    #port for test
+                    print("Test:",new_msg.content)
                 elif new_msg.statu==0:
                     print(new_msg.content)
                 else:

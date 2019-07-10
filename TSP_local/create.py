@@ -1,10 +1,63 @@
 import numpy as np
 import os,sys
 import math
+import time
+
 
 
 
 work_path='./work/'
+
+def cross(s1,s2):
+    length=len(s1)
+    res=[s1[i] for i in range(length//2)]
+    #res=s1[:length//2]
+    for i in range(length//2,length):
+        if s2[i] not in res:
+            res.append(s2[i])
+    for i in range(length//2):
+        if s2[i] not in res:
+            res.append(s2[i])
+    return np.array(res)
+
+def mutation(s):
+    lenght=len(s)
+    a,b=np.random.permutation(lenght)[:2]
+    s[a],s[b]=s[b],s[a]
+    return s
+
+def cross_and_mutation(s1,s2):
+    child=cross(s1,s2)
+    return mutation(child)
+
+
+def next_generation(solutions,matrix):
+    length=len(solutions)
+    tmp=[]
+    for i in range(length):
+        for j in range(length):
+            if i!=j:
+                tmp.append(cross_and_mutation(solutions[i],solutions[j]))
+    tmp=np.array(tmp)
+    #print("tmp.shape",tmp.shape)
+    #print(solutions.shape)
+    solutions=np.vstack((solutions,tmp))
+    sorted_solutions=sorted(solutions,key=lambda x:cost(x,matrix))[:length]
+    return np.array(sorted_solutions)
+
+def iteration(solutions,matrix,max_iteration=100,max_time=180):
+    start=time.time()
+    time_escaped=0
+    iter=0
+    while iter<max_iteration and time_escaped<max_time:
+        solutions=next_generation(solutions,matrix)
+        iter+=1
+        time_escaped=time.time()-start
+        #print("This is the %d-th iteration."%iter)
+        #print("solutions[0]",solutions[0])
+    #print("This iteration is over.")
+    return solutions[0]
+
 
 def create_city(low=0,up=90):
     x=np.random.uniform(low,up,2)
@@ -42,7 +95,7 @@ def distance_matrix(cities):
         for j in range(i+1,num):
             matrix[i][j]=dist(cities[i],cities[j])
             matrix[j][i]=matrix[i][j]
-    return matrix
+    return matrix.tolist()
 
 def cost(solution,matrix):
     #tmp=np.copy(solution)
@@ -55,7 +108,7 @@ def cost(solution,matrix):
     return cost
 
 def random_solution(num=100):
-    return np.random.permutation(num)
+    return np.random.permutation(num).tolist()
 
 def init_solutions(num=10,cities=100):
     solutions=[]

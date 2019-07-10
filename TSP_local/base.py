@@ -8,6 +8,7 @@ import json
 import multiprocessing
 from multiprocessing import Process
 
+
 class message:
     '''
     "901":"string",
@@ -54,11 +55,11 @@ class server(Process):
         self.s.listen(5)
         while True:
             conn,addr=self.s.accept()
-            print('Connect with:',addr)
-            data=conn.recv(8192).decode()
+            #print('Connect with:',addr)
+            data=conn.recv(51200).decode()
             statu,content=eval(data) 
             msg=message(statu,content)
-            msg.show()
+            #msg.show()
             self.msg_list.put(msg.msg_encode())
             conn.send(message(669,'recved').msg_encode())
             
@@ -69,10 +70,10 @@ def send_to(msg,host='localhost',port=50001):
     client.connect(addr)
     content=msg.msg_encode()
     client.send(content)
-    recv=client.recv(8192).decode()
+    recv=client.recv(51200).decode()
     statu,content=eval(recv)
     recv_msg=message(statu,content)
-    recv_msg.show()
+    #recv_msg.show()
     client.close()
     return recv_msg
     
