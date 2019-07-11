@@ -36,7 +36,7 @@ class master_work(Process):
        
 
     def process(self,msg):
-        statu,content=eval(msg.decode())
+        statu,content=json.loads(msg)
         if statu==101:
             self.route[content[0]]=content[1]
             new_msg=message(669,'Port %d registed successfully!'%content[1])

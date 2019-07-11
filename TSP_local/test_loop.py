@@ -16,7 +16,7 @@ class worker_work(Process):
         self.data=list()
 
     def process(self,msg):
-        statu,content=eval(msg.decode())
+        statu,content=json.loads(msg.decode())
         new_msg=message(statu,content)
         return new_msg
 
@@ -107,7 +107,8 @@ class worker:
                 send_to(msg)
                 break
             except:
-                pass
+                break
+                
         self.master_work=worker_work(self.msg_list,self.port)
 
     def run(self):

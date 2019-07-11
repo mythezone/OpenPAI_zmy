@@ -19,7 +19,9 @@ class worker_work(Process):
         
 
     def process(self,msg):
-        statu,content=eval(msg.decode())
+        #print("The message is totally recvd.")
+        statu,content=json.loads(msg)
+        #print("The content for testing:",content)
         new_msg=message(statu,content)
         return new_msg
 

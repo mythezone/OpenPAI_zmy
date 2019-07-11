@@ -14,11 +14,11 @@ class worker_work(Process):
         self.server_port=server_port
 
     def process(self,msg):
-        statu,content=eval(msg.decode())
+        statu,content=json.loads(msg.decode())
         new_msg=message(statu,content)
         return new_msg
 
-    def init_problem(self,cities=10):
+    def init_problem(self,cities=70):
         cities=cr.create_cities(cities)
         content=cities.tolist()
         return content
