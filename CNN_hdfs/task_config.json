@@ -1,0 +1,45 @@
+{
+    "comment":{
+        "Title":"This is the comment for this json file.",
+        "Content":"The protocal for the status.",
+        "0 to 101":"This will be defined by the algorithms.",
+        "100 to 199":"This for the server to do some common things,as show in the common attr.",
+        "200 to 299":"Ports in this range defined below must be handled in the work process.",
+        "300 to 399":"Not defined now.",
+        "400 to 499":"Ports in this range will not been put into the message list, but handled by the server itself.",
+        "500 to 599":"Not defined now.",
+        "600 to 699":"define the communication statu",
+        "700 to 899":"Not defined now.",
+        "900 to 999":"some files type and other object classes.",
+        "greater than 10000":"This is a port."
+    },
+
+    "algo_statu":{
+        "0":"init",
+        "1":"loop",
+        "2":"iteration",
+        "3":"main"
+    },
+
+    "commom_statu":{
+        "101":"port_registry",
+        "102":"request_for_ports",
+        "103":"respons_for_ports",
+        "104":"recved.",
+
+        "233":"work",
+        
+        "666":"success",
+        "667":"over",
+        "668":"error",
+        "669":"recieved",
+        
+        "700":"result",
+
+        "901":"string",
+        "902":"list",
+        "903":"numpy",
+        "904":"file"
+    }
+    
+}

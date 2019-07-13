@@ -3,6 +3,11 @@ import os,sys
 import numpy as np
 import time
 from pai_pyhdfs import *
+from base import *
+from multiprocessing import process
+import multiprocessing
+import json
+
 
 '''
 This is the init main program.
