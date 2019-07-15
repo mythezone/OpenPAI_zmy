@@ -9,6 +9,7 @@ import multiprocessing
 from multiprocessing import Process
 import func_lib as fl
 from func_lib import message
+import custom_func as cf
 
 
 # class message:
@@ -85,7 +86,6 @@ class server(Process):
             msg=message(101,[self.name,self.port])
             self.msg_list.put(msg.msg_encode())
         
-        
     def run(self):
         self.s.listen(10)
         while True:
@@ -97,14 +97,14 @@ class server(Process):
             if statu<400 or statu>=500:
                 msg=message(statu,content)
                 self.msg_list.put(msg.msg_encode())
-                conn.send(message(669,'recved').msg_encode())
+                conn.send(message(466,'recved').msg_encode())
             else:
                 print("Testing msg recvd:",statu,content)
             
 class messager(Process):
     def __init__(self,msg_list,host='locahost',debug=False):
         super().__init__()
-        print("init the sender...")
+        print("Messager initiated.")
         self.s=socket.socket()
         self.msg_list=msg_list
         self.host=host
@@ -155,9 +155,9 @@ class handler:
 
 
 class worker(Process):
-    def __init__(self,recv_list,send_list,hdlr=None):
+    def __init__(self,recv_list,send_list,custom_func=dict(),ob=None):
         super().__init__()
-        self.handler=hdlr
+        self.flib=fl.cstm_flib(custom_func,ob=ob)
         self.recv_list=recv_list
         self.send_list=send_list
         
@@ -169,9 +169,8 @@ class worker(Process):
             else:
                 msg=self.recv_list.get()
                 new_msg=message.b2m(msg)
-                work=self.handler.get_func(new_msg.statu)
-                processed_msg=work(new_msg.content)
-                self.send_or_remain(processed_msg)
+                func=self.flib.get_by_statu(new_msg.statu)
+                func.run(new_msg.content)
 
     def send_or_remain(self,msg):
         statu=msg.statu
@@ -181,7 +180,7 @@ class worker(Process):
             self.recv_list.put(msg)
         
 class micro_service(Process):
-    def __init__(self,recv_list,send_list,wkr,*args,port=50001,host='localhost',name='service_name',**kargs):
+    def __init__(self,recv_list,send_list,func_config='',*args,port=50001,host='localhost',name='service_name',**kargs):
         super().__init__()
         self.recv_list=recv_list
         self.send_list=send_list
@@ -189,9 +188,10 @@ class micro_service(Process):
         self.name=name
         self.kargs=kargs
         self.route=dict()
+        self.dct=cf.profile().d
         self.server=server(self.recv_list,name=name,host=host,port=port)
         self.messager=messager(self.send_list,host=host)
-        self.worker=worker(self.recv_list,self.send_list,wkr)
+        self.worker=worker(self.recv_list,self.send_list,custom_func=self.dct,ob=self)
 
     def put_to_send_list(self,port,msg):
         new_msg=message(port,msg).msg_encode()
@@ -200,14 +200,16 @@ class micro_service(Process):
     def put_to_recv_list(self,msg):
         new_msg=msg.msg_encode()
         self.recv_list.put(new_msg)
-        
 
     def run(self):
+        self.server.run()
+        self.messager.run()
+        self.worker.run()
         pass
 
-# if __name__=="__main__":
-#     msgl=multiprocessing.Queue()
+if __name__=="__main__":
+    recv_list=multiprocessing.Queue()
+    send_list=multiprocessing.Queue()
 
-#     s=server(msgl)
-#     s.start()
-#     print("Server started.")
+    ms=micro_service(recv_list,send_list,func_config='hello')
+    ms.start()
