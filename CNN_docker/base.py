@@ -74,6 +74,7 @@ class messager(Process):
         self.route=self.ob.route
         self.host=host
         self.debug=debug
+        self.port=self.ob.server.port
 
     def run(self):
         while True:
@@ -81,19 +82,31 @@ class messager(Process):
                 time.sleep(2)
                 continue
             else:
-                statu,content=json.loads(self.msg_list.get().decode())
-                if statu<10000:
-                    print("Wrong Statu in the sending list.")
+                msg=self.msg_list.get()
+                statu,content=json.loads(msg.decode())
+                if statu>400 and statu<=500:
+                    print("Test or Info msg:",statu,content)
                 else:
-                    print('msg',statu,content)
-                    addr=(self.host,statu)
-                    self.s.connect(addr)
-
-                    new_msg=message(content[0],content[1]).msg_encode()
-                    self.s.send(new_msg)
-                    recv=self.s.recv(4096)
-                    print(recv)
-                    self.s.close()
+                    if statu in self.ob.reflect:
+                        next_name=self.ob.reflect[statu]
+                    else:
+                        print("This statu is not defined in the algorithm, plz check.")
+                    if next_name in self.route:
+                        next_port=self.route[next_name]
+                        print('msg',statu,content)
+                        addr=(self.host,next_port)
+                        self.s.connect(addr)
+                        new_msg=message(content[0],content[1]).msg_encode()
+                        self.s.send(new_msg)
+                        recv=self.s.recv(4096)
+                        print(recv)
+                        self.s.close()
+                    else:
+                        new_msg=message(102,[self.port,next_name])
+                        self.msg_list.put(new_msg.msg_encode)
+                        self.msg_list.put(msg)
+                        continue
+                    
 
 
 class worker(Process):
@@ -119,7 +132,7 @@ class worker(Process):
                 func.run(new_msg.content)
        
 class micro_service:
-    def __init__(self,recv_list,send_list,*args,func_dct=dict(),host='localhost',port=50001,name='service_name',**kargs):
+    def __init__(self,recv_list,send_list,*args,func_dct=dict(),task_config='task_config.json',host='localhost',port=50001,name='service_name',**kargs):
         #super().__init__()
         self.recv_list=recv_list
         self.send_list=send_list
@@ -127,6 +140,14 @@ class micro_service:
         self.name=name
         self.kargs=kargs
         self.route=dict()
+
+        #statu to name.
+        if task_config!='':
+            with open(task_config,'r') as ff:
+                self.reflect=json.loads(ff.read())
+        else:
+            self.reflect=dict()
+
         self.dct=func_dct
         self.server=server(ob=self,host=host,port=port)
         self.messager=messager(self.send_list,host=host)
