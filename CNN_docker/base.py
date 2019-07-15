@@ -8,55 +8,57 @@ import json
 import multiprocessing
 from multiprocessing import Process
 import func_lib as fl
+from func_lib import message
 
 
-class message:
-    '''
-    "901":"string",
-    "902":"list",
-    "903":"numpy",
-    "904":"file"
-    '''
-    def __init__(self,statu,content):
-        self.statu=statu
-        self.content=content
-        self.m=[statu,content]
+# class message:
+#     '''
+#     "901":"string",
+#     "902":"list",
+#     "903":"numpy",
+#     "904":"file"
+#     '''
+#     def __init__(self,statu,content):
+#         self.statu=statu
+#         self.content=content
+#         self.m=[statu,content]
 
-    def msg_encode(self):
-        #return str(self.m).encode()
-        msg=json.dumps(self.m).encode()
-        return msg
+#     def msg_encode(self):
+#         #return str(self.m).encode()
+#         msg=json.dumps(self.m).encode()
+#         return msg
 
-    #@staticmethod
-    def msg_decode(self,msg):
-        statu,content=json.loads(msg.decode())
-        if statu==901:
-            return content
-        elif statu==902:
-            return content
-        else:
-            print("check your msg type!")
-        return content
+#     #@staticmethod
+#     def msg_decode(self,msg):
+#         statu,content=json.loads(msg.decode())
+#         if statu==901:
+#             return content
+#         elif statu==902:
+#             return content
+#         else:
+#             print("check your msg type!")
+#         return content
 
-    @staticmethod
-    def b2m(msg):
-        """
-        a static method of the class message,used to change the binary message recvd from the socket into a message class entity.
-        """
-        tmp=msg.decode()
-        statu,content=json.loads(tmp)
-        return message(statu,content)
+#     @staticmethod
+#     def b2m(msg):
+#         """
+#         a static method of the class message,used to change the binary message recvd from the socket into a message class entity.
+#         """
+#         tmp=msg.decode()
+#         statu,content=json.loads(tmp)
+#         return message(statu,content)
 
-    def show(self):
-        print('statu: ',self.m[0],'; content: ',self.m[1])
+#     def show(self):
+#         print('statu: ',self.m[0],'; content: ',self.m[1])
 
 class server(Process):
-    def __init__(self,msg_list,host='localhost',port=50001):
+    def __init__(self,msg_list,name='noname',host='localhost',port=50001):
         Process.__init__(self)
         self.s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.host=host
         self.port=port
         self.msg_list=msg_list
+        self.name=name
         if type(port) is int:
             print("init the server on port %d."%port)
             try:
@@ -77,11 +79,17 @@ class server(Process):
                         print("Tried 10 times but failed, check your code plz.")
                         break
                     continue
+
+        #if this isnot the master server,then registe its port.
+        if port!=50001:
+            msg=message(101,[self.name,self.port])
+            self.msg_list.put(msg.msg_encode())
+        
         
     def run(self):
-        self.s.listen(5)
+        self.s.listen(10)
         while True:
-            conn,addr=self.s.accept()
+            conn,_=self.s.accept()
             #print('Connect with:',addr)
             data=conn.recv(512000)
             print("server recvd data:",data)
@@ -123,62 +131,18 @@ class messager(Process):
                         print("statu:",tmp1,'\ncontent:',tmp2)
                     self.s.close()
 
-def send_to(msg,host='localhost',port=50001):
-    client=socket.socket()
-    addr=(host,port)
-    client.connect(addr)
-    content=msg.msg_encode()
-    client.send(content)
-    recv=client.recv(512000)
-    statu,content=json.loads(recv.decode())
-    recv_msg=message(statu,content)
-    #recv_msg.show()
-    client.close()
-    return recv_msg
-
-# class flib_base:
-#     def __init__(self,dct):
-#         self.route=dct
-#         #self.funcs=[]
-
-#     def get_by_statu(self,statu):
-#         if statu in self.route:
-#             return self.route[statu]
-#         else:
-#             return self.not_exist_func
-
-#     def regist_by_statu(self,func,statu=0):
-#         #self.funcs.append(func)
-#         if statu==0:
-#             tmp=func.statu
-#         else:
-#             tmp=statu
-#         self.route[tmp]=func
-
-#     def not_exist_func(self):
-#         print("This statu is not exist.")
-
-#     def show_all(self):
-#         print("%5s   %15s"%("statu","function name"))
-#         for i in self.route:
-#             print("%5d,   %15s"%(i,self.route[i].name))
-
-# class func:
-#     def __init__(self,statu,f,name=None, discription='This is the discrp of the function'):
-#         self.statu=statu
-#         self.discrp=discription
-#         self.f=f
-#         if name==None:
-#             self.name="Noname_on_%d"%statu
-#         else:
-#             self.name=name
-
-#     def run(self,msg):
-#         return self.f(msg)
-
-#     def help(self):
-#         print("func : %s"%self.name)
-#         print(self.discrp)    
+# def send_to(msg,host='localhost',port=50001):
+#     client=socket.socket()
+#     addr=(host,port)
+#     client.connect(addr)
+#     content=msg.msg_encode()
+#     client.send(content)
+#     recv=client.recv(512000)
+#     statu,content=json.loads(recv.decode())
+#     recv_msg=message(statu,content)
+#     #recv_msg.show()
+#     client.close()
+#     return recv_msg
 
 class handler:
     def __init__(self,config='handler_config.json'):
@@ -217,14 +181,16 @@ class worker(Process):
             self.recv_list.put(msg)
         
 class micro_service(Process):
-    def __init__(self,recv_list,send_list,wkr,*args):
+    def __init__(self,recv_list,send_list,wkr,*args,port=50001,host='localhost',name='service_name',**kargs):
         super().__init__()
         self.recv_list=recv_list
         self.send_list=send_list
         self.args=args
+        self.name=name
+        self.kargs=kargs
         self.route=dict()
-        self.server=server(self.recv_list,host='localhost',port=50001)
-        self.messager=messager(self.send_list,host='localhost')
+        self.server=server(self.recv_list,name=name,host=host,port=port)
+        self.messager=messager(self.send_list,host=host)
         self.worker=worker(self.recv_list,self.send_list,wkr)
 
     def put_to_send_list(self,port,msg):
@@ -238,9 +204,6 @@ class micro_service(Process):
 
     def run(self):
         pass
-
-
-
 
 # if __name__=="__main__":
 #     msgl=multiprocessing.Queue()

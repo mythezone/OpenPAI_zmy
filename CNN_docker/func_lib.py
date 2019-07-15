@@ -1,8 +1,48 @@
 import numpy
 import json
 from functools import partial
-from base import message
 import multiprocessing
+import custom_func as cf
+
+class message:
+    '''
+    "901":"string",
+    "902":"list",
+    "903":"numpy",
+    "904":"file"
+    '''
+    def __init__(self,statu,content):
+        self.statu=statu
+        self.content=content
+        self.m=[statu,content]
+
+    def msg_encode(self):
+        #return str(self.m).encode()
+        msg=json.dumps(self.m).encode()
+        return msg
+
+    #@staticmethod
+    def msg_decode(self,msg):
+        statu,content=json.loads(msg.decode())
+        if statu==901:
+            return content
+        elif statu==902:
+            return content
+        else:
+            print("check your msg type!")
+        return content
+
+    @staticmethod
+    def b2m(msg):
+        """
+        a static method of the class message,used to change the binary message recvd from the socket into a message class entity.
+        """
+        tmp=msg.decode()
+        statu,content=json.loads(tmp)
+        return message(statu,content)
+
+    def show(self):
+        print('statu: ',self.m[0],'; content: ',self.m[1])
 
 class flib_base:
     def __init__(self):
@@ -22,6 +62,7 @@ class flib_base:
         else:
             tmp=statu
         self.route[tmp]=func
+        print("func registed succ.")
 
     def not_exist_func(self):
         print("This statu is not exist.")
@@ -64,27 +105,28 @@ class std_flib(flib_base):
 
     @staticmethod
     def port_request(msg,ob=None):
-        if msg[1].lower()=='all':
+        if msg.content.lower()=='all':
             new_msg=message(402,ob.route)
-            ob.put_to_send_list(msg[0],new_msg)
+            ob.put_to_send_list(msg.statu,new_msg)
             print("ports send succefully.")
         else:
-            if msg[1] in ob.route:
-                tmp=ob.route[msg[1]]
-                new_msg=message(403,[tmp,msg[1]])
-                ob.put_to_send_list(msg[0],new_msg)
+            if msg.content in ob.route:
+                tmp=ob.route[msg.content]
+                new_msg=message(403,[tmp,msg.content])
+                ob.put_to_send_list(msg.statu,new_msg)
                 print("port send successfully.")
             else:
                 new_msg=message(404,'port not found.')
-                ob.put_to_send_list(msg[0],new_msg)
+                ob.put_to_send_list(msg.statu,new_msg)
                 print("port not found.")
 
 
-class flib(std_flib):
+class cstm_flib(std_flib):
     def __init__(self,dct,ob=None):
         super().__init__(ob=ob)
         for i in dct:
-            self.route[i]=dct[i]
+            self.regist_by_statu(func(i,partial(dct[i],ob=ob),discription='This is a custom function.'))
+            
 
 
 
@@ -92,9 +134,18 @@ class flib(std_flib):
 class test:
     def __init__(self):
         self.route=dict()
+        self.dct=dict()
         self.send_list=multiprocessing.Queue()
-        self.route[400]=lambda x:x+10
-        self.s=flib(self.route,ob=self)
+        self.dct=cf.profile().d
+        self.s=cstm_flib(self.dct,ob=self)
         
     def t(self,msg):
         return self.s.get_by_statu(msg.statu)
+
+if __name__=="__main__":
+    t=test()
+    s=t.s
+    f=t.t(message(101,'test1'))
+    f.run(['name',50001])
+    print(s.route)
+    print(t.route)

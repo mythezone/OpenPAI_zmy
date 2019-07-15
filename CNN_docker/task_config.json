@@ -33,6 +33,7 @@
         "402":"all port.",
         "403":"specified port with name.",
         "404":"port not found.",
+        "466":"server's respons message."
         
         "666":"success",
         "667":"over",
