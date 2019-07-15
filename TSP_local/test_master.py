@@ -21,21 +21,10 @@ class master_work(Process):
             port=self.route[name]
             return port
         except:
-            print("The port has not been registed!")
-        # show_flag=True
-        # while True:
-        #     if name in self.route:
-        #         port=self.route[name]
-        #         break
-        #     else:
-        #         time.sleep(2)
-        #         if show_flag:
-        #             print("The server has not be registed!Plz wait!")
-        #             show_flag=False
-
-       
+            print("The port has not been registed!")    
 
     def process(self,msg):
+
         statu,content=json.loads(msg)
         if statu==101:
             self.route[content[0]]=content[1]

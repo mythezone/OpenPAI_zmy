@@ -18,7 +18,7 @@ class worker_work(Process):
         new_msg=message(statu,content)
         return new_msg
 
-    def init_problem(self,cities=70):
+    def init_problem(self,cities=20):
         cities=cr.create_cities(cities)
         content=cities.tolist()
         return content

@@ -56,7 +56,7 @@ class server(Process):
     def run(self):
         self.s.listen(5)
         while True:
-            conn,addr=self.s.accept()
+            conn,_=self.s.accept()
             #print('Connect with:',addr)
             data=conn.recv(512000)
             print("data:",data)
