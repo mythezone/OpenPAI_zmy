@@ -49,7 +49,6 @@ class worker_work(Process):
                                 print("Try 10 times the server is not ready.Please check the port of the server.")
                                 break
 
-
                 elif new_msg.statu==669:
                     print(new_msg.content)
                     

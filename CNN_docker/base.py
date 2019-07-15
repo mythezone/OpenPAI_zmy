@@ -12,54 +12,16 @@ from func_lib import message
 import custom_func as cf
 
 
-# class message:
-#     '''
-#     "901":"string",
-#     "902":"list",
-#     "903":"numpy",
-#     "904":"file"
-#     '''
-#     def __init__(self,statu,content):
-#         self.statu=statu
-#         self.content=content
-#         self.m=[statu,content]
-
-#     def msg_encode(self):
-#         #return str(self.m).encode()
-#         msg=json.dumps(self.m).encode()
-#         return msg
-
-#     #@staticmethod
-#     def msg_decode(self,msg):
-#         statu,content=json.loads(msg.decode())
-#         if statu==901:
-#             return content
-#         elif statu==902:
-#             return content
-#         else:
-#             print("check your msg type!")
-#         return content
-
-#     @staticmethod
-#     def b2m(msg):
-#         """
-#         a static method of the class message,used to change the binary message recvd from the socket into a message class entity.
-#         """
-#         tmp=msg.decode()
-#         statu,content=json.loads(tmp)
-#         return message(statu,content)
-
-#     def show(self):
-#         print('statu: ',self.m[0],'; content: ',self.m[1])
-
 class server(Process):
-    def __init__(self,msg_list,name='noname',host='localhost',port=50001):
+    def __init__(self,ob=None,host='localhost',port=50001):
         Process.__init__(self)
         self.s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.host=host
         self.port=port
-        self.msg_list=msg_list
-        self.name=name
+        self.ob=ob
+        self.recv_list=ob.recv_list
+        self.send_list=ob.send_list
+        self.name=ob.name
         if type(port) is int:
             print("init the server on port %d."%port)
             try:
@@ -83,8 +45,9 @@ class server(Process):
 
         #if this isnot the master server,then registe its port.
         if port!=50001:
-            msg=message(101,[self.name,self.port])
-            self.msg_list.put(msg.msg_encode())
+            print("Now registing the port.")
+            msg=message(50001,[101,[self.name,self.port]]).msg_encode()
+            self.send_list.put(msg)
         
     def run(self):
         self.s.listen(10)
@@ -96,17 +59,19 @@ class server(Process):
             statu,content=json.loads(data.decode()) 
             if statu<400 or statu>=500:
                 msg=message(statu,content)
-                self.msg_list.put(msg.msg_encode())
+                self.recv_list.put(msg.msg_encode())
                 conn.send(message(466,'recved').msg_encode())
             else:
                 print("Testing msg recvd:",statu,content)
             
 class messager(Process):
-    def __init__(self,msg_list,host='locahost',debug=False):
+    def __init__(self,ob=None,host='locahost',debug=False):
         super().__init__()
         print("Messager initiated.")
         self.s=socket.socket()
-        self.msg_list=msg_list
+        self.ob=ob
+        self.msg_list=self.ob.send_list
+        self.route=self.ob.route
         self.host=host
         self.debug=debug
 
@@ -120,38 +85,15 @@ class messager(Process):
                 if statu<10000:
                     print("Wrong Statu in the sending list.")
                 else:
+                    print('msg',statu,content)
                     addr=(self.host,statu)
                     self.s.connect(addr)
-                    self.s.send(content)
+
+                    new_msg=message(content[0],content[1]).msg_encode()
+                    self.s.send(new_msg)
                     recv=self.s.recv(4096)
-
-                    #show debug information.
-                    if self.debug==True:
-                        tmp1,tmp2=json.loads(recv.decode())
-                        print("statu:",tmp1,'\ncontent:',tmp2)
+                    print(recv)
                     self.s.close()
-
-# def send_to(msg,host='localhost',port=50001):
-#     client=socket.socket()
-#     addr=(host,port)
-#     client.connect(addr)
-#     content=msg.msg_encode()
-#     client.send(content)
-#     recv=client.recv(512000)
-#     statu,content=json.loads(recv.decode())
-#     recv_msg=message(statu,content)
-#     #recv_msg.show()
-#     client.close()
-#     return recv_msg
-
-class handler:
-    def __init__(self,config='handler_config.json'):
-        with open(config,'r') as ff:
-            self.statu_to_func=json.loads(ff.read())['statu_to_func']
-        
-    def get_func(self,statu):
-        func_name=self.statu_to_func[str(statu)]
-        return eval("fl.%s"%func_name)
 
 
 class worker(Process):
@@ -165,51 +107,44 @@ class worker(Process):
         while True:
             if self.recv_list.empty():
                 time.sleep(2)
+                #print("No msg in recvlist")
                 continue
             else:
+                print("There is a msg in recv_list")
+                print("little change")
                 msg=self.recv_list.get()
                 new_msg=message.b2m(msg)
+                new_msg.show()
                 func=self.flib.get_by_statu(new_msg.statu)
                 func.run(new_msg.content)
-
-    def send_or_remain(self,msg):
-        statu=msg.statu
-        if statu>10000:
-            self.send_list.put(msg)
-        else:
-            self.recv_list.put(msg)
-        
-class micro_service(Process):
-    def __init__(self,recv_list,send_list,func_config='',*args,port=50001,host='localhost',name='service_name',**kargs):
-        super().__init__()
+       
+class micro_service:
+    def __init__(self,recv_list,send_list,*args,func_dct=dict(),host='localhost',port=50001,name='service_name',**kargs):
+        #super().__init__()
         self.recv_list=recv_list
         self.send_list=send_list
         self.args=args
         self.name=name
         self.kargs=kargs
         self.route=dict()
-        self.dct=cf.profile().d
-        self.server=server(self.recv_list,name=name,host=host,port=port)
+        self.dct=func_dct
+        self.server=server(ob=self,host=host,port=port)
         self.messager=messager(self.send_list,host=host)
         self.worker=worker(self.recv_list,self.send_list,custom_func=self.dct,ob=self)
 
-    def put_to_send_list(self,port,msg):
-        new_msg=message(port,msg).msg_encode()
+    def put_to_send_list(self,port,content):
+        new_msg=message(port,content).msg_encode()
         self.send_list.put(new_msg)
 
-    def put_to_recv_list(self,msg):
-        new_msg=msg.msg_encode()
-        self.recv_list.put(new_msg)
-
     def run(self):
-        self.server.run()
-        self.messager.run()
-        self.worker.run()
-        pass
+        self.server.start()
+        self.messager.start()
+        self.worker.start()
+        
 
 if __name__=="__main__":
     recv_list=multiprocessing.Queue()
     send_list=multiprocessing.Queue()
 
     ms=micro_service(recv_list,send_list,func_config='hello')
-    ms.start()
+    ms.run()

@@ -5,12 +5,6 @@ import multiprocessing
 import custom_func as cf
 
 class message:
-    '''
-    "901":"string",
-    "902":"list",
-    "903":"numpy",
-    "904":"file"
-    '''
     def __init__(self,statu,content):
         self.statu=statu
         self.content=content
@@ -37,7 +31,10 @@ class message:
         """
         a static method of the class message,used to change the binary message recvd from the socket into a message class entity.
         """
-        tmp=msg.decode()
+        try:
+            tmp=msg.decode()
+        except:
+            tmp=msg
         statu,content=json.loads(tmp)
         return message(statu,content)
 
@@ -97,27 +94,27 @@ class std_flib(flib_base):
         self.regist_by_statu(func(102,partial(self.port_request,ob=ob),discription="Port request."))
 
     @staticmethod
-    def port_registry(msg,ob=None):
-        ob.route[msg[0]]=msg[1]
+    def port_registry(content,ob=None):
+        ob.route[content[0]]=content[1]
         #print(ob.route)
-        new_msg=message(401,'Registry succed.')
-        ob.send_list.put(new_msg.msg_encode())
+        new_msg=[401,'Registry succed.']
+        ob.put_to_send_list(content[1],new_msg)
 
     @staticmethod
-    def port_request(msg,ob=None):
-        if msg.content.lower()=='all':
-            new_msg=message(402,ob.route)
-            ob.put_to_send_list(msg.statu,new_msg)
+    def port_request(content,ob=None):
+        if content[1].lower()=='all':
+            new_msg=[402,ob.route]
+            ob.put_to_send_list(content[0],new_msg)
             print("ports send succefully.")
         else:
-            if msg.content in ob.route:
-                tmp=ob.route[msg.content]
-                new_msg=message(403,[tmp,msg.content])
-                ob.put_to_send_list(msg.statu,new_msg)
+            if content[1] in ob.route:
+                tmp=ob.route[content[1]]
+                new_msg=[403,[tmp,content[1]]]
+                ob.put_to_send_list(content[0],new_msg)
                 print("port send successfully.")
             else:
-                new_msg=message(404,'port not found.')
-                ob.put_to_send_list(msg.statu,new_msg)
+                new_msg=[404,'port not found.']
+                ob.put_to_send_list(content[0],new_msg)
                 print("port not found.")
 
 
