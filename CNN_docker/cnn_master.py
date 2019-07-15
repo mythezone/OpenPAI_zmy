@@ -26,8 +26,6 @@ class master_work(Process):
         except:
             print("The port has not been registed!")
 
-    
-
     def process(self,msg):
         statu,content=json.loads(msg)
 

@@ -28,6 +28,11 @@
         "104":"recved.",
 
         "233":"work",
+
+        "401":"port registed successfully.",
+        "402":"all port.",
+        "403":"specified port with name.",
+        "404":"port not found.",
         
         "666":"success",
         "667":"over",
