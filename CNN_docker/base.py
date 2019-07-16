@@ -9,7 +9,7 @@ import multiprocessing
 from multiprocessing import Process
 import func_lib as fl
 from func_lib import message
-import custom_func as cf
+#import custom_func as cf
 
 
 class server(Process):

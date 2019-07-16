@@ -2,7 +2,7 @@ import numpy
 import json
 from functools import partial
 import multiprocessing
-import custom_func as cf
+#import custom_func as cf
 
 class message:
     def __init__(self,statu,content):
@@ -59,7 +59,7 @@ class flib_base:
         else:
             tmp=statu
         self.route[tmp]=func
-        print("func registed succ.")
+        print("func registed succ.",func.statu)
 
     def not_exist_func(self):
         print("This statu is not exist.")

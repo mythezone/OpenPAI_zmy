@@ -4,6 +4,10 @@ from functools import partial
 import caffe
 import time
 import sys,os
+from pai_pyhdfs import *
+import ncs
+from easydict import EasyDict as edict
+from func_lib import message
 
 paras={
     'proto':'./models/lenet300100/lenet_train_test.prototxt',
@@ -26,8 +30,6 @@ paras={
     'ncs_stepsize':50,
     'r_count':0,
     'es_cache':{},
-    'acc_constrain':0.08
-
 }
 
 caffe.set_mode_gpu()
@@ -76,37 +78,94 @@ def get_sparsity(thenet):
       total += thenet.params[layer_id][1].data.size
    return remain*1./total
 
-def single_evaluate(the_input,x,batchcount,acc,solver=solver):
-    print("In the single_evaluation function!Version: 2.0")
-    print("x",x)
+def get_all(n):
+    '''
+    This function will get all the result in "fitX.npy",and stack them in a array.
+    The result file will be deleted after read.
+    In this program there will be exactly 3 result files.
+
+    :return: [array_of_solutions,array_of_fits]
+    '''
+
+    def wait_hdfs_files(filepath,hdfs_path="10.20.37.175",port=9000):
+        flag=True
+        hdfs_client=pyhdfs.HdfsClient(hdfs_path,port)
+        count=n
+        res=[]
+        X=[]
+
+        while count!=0:
+            files=hdfs_client.listdir(filepath)
+            for k in files:
+                #print('in the for loop.')
+                if k.startswith('fit'):
+                  tmp_files=hdfs_client.listdir(filepath)
+                  while k in tmp_files:
+                    try:
+                      tmp=hdfs_load('/shared/work/',k,delete=False)
+                      #time.sleep(1)
+                      hdfs_client.delete('/shared/work/'+k)
+                      tmp_files=hdfs_client.listdir(filepath)
+                    except:
+                      tmp_files=hdfs_client.listdir(filepath)
+
+                  tmp_x=tmp[0]
+                  tmp_fit=tmp[1]
+                  res.append(tmp_fit)
+                  X.append(tmp_x)
+                  count-=1
+        print("all the results recevied!")
+        return np.array([X,res])
+   
+    return wait_hdfs_files('/shared/work/')
+
+def set_solutions(solutions):
+    '''
+    This function used to split solutions into 3 files, and save them into work path as a .npy file.
+
+    :param solutions:
+    :return:
+    '''
+    print("solutions",solutions,"len:",len(solutions))
+    count=0
+    for solution in solutions:
+      fn='solution_'+str(np.random.randint(0,9999999))+'.npy'
+      np.save(fn,solution)
+      try:
+        hdfs_set_file('./','/shared/work/',fn)
+      except:
+        pass
+      try:
+        os.remove(fn)
+      except:
+        pass
+      count+=1
+    print('All the solutions have been setted!')
+
+def single_evaluate(content,solver=solver,ob=None):
+    the_input,x,batchcount,acc=content
     acc_constrain=paras['acc_constrain']
     x_fit = 1.1
-    #thenet = caffe.Net(origin_proto_name, caffe.TEST)
-    # thenet.copy_from(parallel_file_name)
-    #files=os.listdir('./models/lenet300100')
-    #print("files",files)
-    # s = caffe.SGDSolver(solver_path)
-    #print("S loaded.")
-    fi=hdfs_get_file('/shared/work/','tmp_model.caffemodel','./')
-    print("model getted,prepare for calculating.")
+
+    fi='tmp_model.caffemodel'
+
+    ob.show_debug("model getted,prepare for calculating.")
     solver.net.copy_from(fi)
-    print("solver net has loaded.")
+    ob.show_debug("solver net has loaded.")
+
     thenet=solver.net
-    #print("shape of thenet, the_input", thenet.blobs['data'].data.shape, the_input.value.shape)
     thenet.blobs['data'].data[:] = the_input
-    #print("difference:", (thenet.blobs['data'].data - the_input.value).mean())
     apply_prune(thenet,x)
-    #acc = test_net(thenet, _start='ip1', _count=batchcount)
+
     acc = test_net(thenet,  _count=batchcount)
-    #print(the_input.value.shape)
-    #acc = thenet.forward(data=the_input.value).blobs['accuracy'].data
+
     if acc >= acc - acc_constrain:
       x_fit = get_sparsity(thenet)
-    #print('accuracy_ontrain, acc',accuracy_ontrain, acc)
-    print("evaluating completed!")
+
+    ob.show_debug("evaluating completed!")
     return x_fit
 
-def outer_loop(solver=solver,itr=1001,paras=paras):
+def outer_loop(*,solver=solver,itr=1001,paras=paras):
     # global ncs_stepsize
     # global work_path
     # global crates_list
@@ -169,8 +228,112 @@ def outer_loop(solver=solver,itr=1001,paras=paras):
             
       solver.step(1)
 
+def NCSloop(*content,ob=None):
+    '''
+    This loop will get the parameters in LoopTest1, and use them to start a ncs loop.
+    The result will contained in a file named 'crates_list.npy' in work path.
+    The LoopTest1.py will use this file to apply prune the solver net.
+    :param tmp_crates:
+    :param tmp_ind:
+    :param accuracy_: in accuracy.npy file
+    :return: create crates_list.npy
+    '''
+
+    tmp_crates,tmp_ind,accuracy_=content
+    the_input_batch=hdfs_load('/shared/work/','data.npy')
+    es = {}
+
+    layer_name=paras['layer_name']
+    crates=paras['crates']
+    crates_list=paras['crates_list']
+    layer_inds=paras['layer_inds']
+    es_method=paras['es_method']
+    ncs_stepsize=paras['ncs_stepsize']
+    
+    if es_method == 'ncs':
+        __C = edict()
+        __C.parameters = {'reset_xl_to_pop':False,
+                            'init_value':tmp_crates, 
+                            'stepsize':ncs_stepsize, 
+                            'bounds':[0.0, 10.], 
+                            'ftarget':0, 
+                            'tmax':1600, 
+                            'popsize':10, 
+                            'best_k':1}
+        es = ncs.NCS(__C.parameters)
+        print('***************NCS initialization***************')
+        tmp_x_ = np.array(crates_list)
+        tmp_input_x = tmp_crates
+        for _ii in range(len(tmp_ind)):
+            tmp_x_[layer_inds[tmp_ind[_ii]]] = tmp_input_x[_ii]
+
+        set_solutions([tmp_x_])
+        _,tmp_fit = get_all(len([tmp_x_]))
+        print('all fitness gotten.')
+
+        es.set_initFitness(es.popsize*tmp_fit)
+        print('fit:{}'.format(tmp_fit))
+        print('***************NCS initialization***************')
+
+    count=0
+    while not es.stop():
+        print("now in the es loop.")
+        count+=1
+        if count==15:
+            break
+        x = es.ask()
+        X = []
+        for x_ in x:
+            tmp_x_ = np.array(crates_list)
+            for _ii in range(len(tmp_ind)):
+                tmp_x_[layer_inds[tmp_ind[_ii]]] = x_[_ii]
+            X.append(tmp_x_)
+        set_solutions(X)
+        X_arrange,fit=get_all(len(X))
+        X = []
+        for x_ in X_arrange:
+            tmp_x_ = np.array(len(tmp_ind)*[0.])
+            for _ii in range(len(tmp_ind)):
+                tmp_x_[_ii]= x_[layer_inds[tmp_ind[_ii]]] 
+            X.append(tmp_x_)
+        es.tell(X, fit)
+        for _ii in range(len(tmp_ind)):
+            crates_list[layer_inds[tmp_ind[_ii]]] = es.result()[0][_ii]
+    for c_i in range(len(crates_list)):
+        crates[layer_name[c_i]] = crates_list[c_i]
+    #es_cache[itr]={'compression':-es.result()[1], 'crates':crates_list[:]}
+    _tmp_c = np.array(len(crates_list)*[-1.])
+    for t_name in tmp_ind:
+        _tmp_c[layer_inds[t_name]] = crates[t_name]
+
+    #output
+    np.save('crates_list.npy',crates_list)
+    hdfs_set_file('./','/shared/work/','crates_list.npy')
+    os.remove('crates_list.npy')
+
+def init(content,ob=None,paras=paras):
+    '''
+    statu:0
+    content:one_iter_num,generally,it's a int.
+    '''
+    msg=message(1,content)
+    ob.recv_list.put(msg.msg_encode())
+    ob.show_debug('init over,wait for respons.')
+
+def main_program(content,ob=None,paras=paras):
+    '''
+    statu:1
+    content:iterated_times
+    '''
+    max_iter=paras['niter']
+    if content<max_iter:
+        pass
+
+
 class profile:
     def __init__(self):
         self.para=dict(paras) #save the  parameters.
         self.funcs=dict() #save the functions.
+        self.funcs[0]=init
+        self.funcs[3]=single_evaluate
         

@@ -17,7 +17,7 @@
     "algo_statu":{
         "0":"init",
         "1":"loop",
-        "2":"iteration",
+        "2":"loop2",
         "3":"main"
     },
 

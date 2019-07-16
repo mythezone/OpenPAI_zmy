@@ -1,3 +1,3 @@
-# About CNN on docker
+# Document of CNN on docker (Chinese Edition/中文版)
 
-## classes
+## class
