@@ -72,6 +72,7 @@ class messager(Process):
         self.ob=ob
         self.msg_list=self.ob.send_list
         self.route=self.ob.route
+        self.algo_route=self.ob.algo_route
         self.host=host
         self.debug=debug
         self.port=self.ob.server.port
@@ -86,35 +87,47 @@ class messager(Process):
                 statu,content=json.loads(msg.decode())
                 if statu>400 and statu<=500:
                     print("Test or Info msg:",statu,content)
-                else:
-                    if statu in self.ob.reflect:
-                        next_name=self.ob.reflect[statu]
+                elif statu<100:
+                    if statu in self.algo_route:
+                        next_name=self.algo_route[statu]
                     else:
                         print("This statu is not defined in the algorithm, plz check.")
-                    if next_name in self.route:
-                        next_port=self.route[next_name]
-                        print('msg',statu,content)
-                        addr=(self.host,next_port)
-                        self.s.connect(addr)
-                        new_msg=message(content[0],content[1]).msg_encode()
-                        self.s.send(new_msg)
-                        recv=self.s.recv(4096)
-                        print(recv)
-                        self.s.close()
+                        print("Error info:",statu,content)
+                        continue
+                elif statu>10000:
+                    new_msg=message(content[0],content[1]).msg_encode()
+                    next_port=statu
+                else:
+                    if statu in self.algo_route:
+                        next_name=self.algo_route[statu]
+                        if next_name in self.route:
+                            next_port=self.route[next_name] 
+                        else:
+                            print('Try to get the needed port.',statu,content)
+                            new_msg=message(102,[self.port,next_name])
+                            self.msg_list.put(new_msg.msg_encode)
+                            self.msg_list.put(msg)    
                     else:
-                        new_msg=message(102,[self.port,next_name])
-                        self.msg_list.put(new_msg.msg_encode)
-                        self.msg_list.put(msg)
+                        print("This statu is not defined in the algorithm, plz check.")
+                        print("Error info:",statu,content)
                         continue
                     
-
+                addr=(self.host,next_port)
+                self.s.connect(addr)
+                new_msg=message(content[0],content[1]).msg_encode()
+                self.s.send(new_msg)
+                recv=self.s.recv(4096)
+                print(recv)
+                self.s.close()
+                    
 
 class worker(Process):
-    def __init__(self,recv_list,send_list,custom_func=dict(),ob=None):
+    def __init__(self,ob=None,custom_func=dict()):
         super().__init__()
         self.flib=fl.cstm_flib(custom_func,ob=ob)
-        self.recv_list=recv_list
-        self.send_list=send_list
+        self.ob=ob
+        self.recv_list=ob.recv_list
+        self.send_list=ob.send_list
         
     def run(self):
         while True:
@@ -132,7 +145,9 @@ class worker(Process):
                 func.run(new_msg.content)
        
 class micro_service:
-    def __init__(self,recv_list,send_list,*args,func_dct=dict(),task_config='task_config.json',host='localhost',port=50001,name='service_name',**kargs):
+    def __init__(self,recv_list,send_list,*args,func_dct=dict(),\
+        task_config='task_config.json',host='localhost',port=50001,\
+            name='service_name',**kargs):
         #super().__init__()
         self.recv_list=recv_list
         self.send_list=send_list
@@ -144,14 +159,19 @@ class micro_service:
         #statu to name.
         if task_config!='':
             with open(task_config,'r') as ff:
-                self.reflect=json.loads(ff.read())
+                tmp=json.loads(ff.read())
+                self.help=tmp['comment']
+                self.algo_route=tmp['algo_statu']
+                self.commom_statu=tmp['commom_statu']
         else:
             self.reflect=dict()
 
+        
+
         self.dct=func_dct
         self.server=server(ob=self,host=host,port=port)
-        self.messager=messager(self.send_list,host=host)
-        self.worker=worker(self.recv_list,self.send_list,custom_func=self.dct,ob=self)
+        self.messager=messager(ob=self,host=host)
+        self.worker=worker(ob=self,custom_func=self.dct)
 
     def put_to_send_list(self,port,content):
         new_msg=message(port,content).msg_encode()
@@ -167,5 +187,5 @@ if __name__=="__main__":
     recv_list=multiprocessing.Queue()
     send_list=multiprocessing.Queue()
 
-    ms=micro_service(recv_list,send_list,func_config='hello')
+    ms=micro_service(recv_list,send_list)
     ms.run()
