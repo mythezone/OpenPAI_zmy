@@ -316,8 +316,8 @@ def init(content,ob=None,paras=paras):
     statu:0
     content:one_iter_num,generally,it's a int.
     '''
-    msg=message(1,content)
-    ob.recv_list.put(msg.msg_encode())
+    msg=message(1,0)
+    ob.send_list.put(msg.msg_encode())
     ob.show_debug('init over,wait for respons.')
 
 def main_program(content,ob=None,paras=paras):
@@ -327,13 +327,95 @@ def main_program(content,ob=None,paras=paras):
     '''
     max_iter=paras['niter']
     if content<max_iter:
-        pass
+        msg=message(2,content+1001)
+        ob.send_list.put(msg.msg_encode())
+        ob.show_debug("message is ready to send to loop.")
+    else:
+        msg=message(499,'Completed! Waiting for the final result...')
+        ob.send_list.put(msg.msg_encode())
+
+#--------------Outer Loop--------------------#
+proto='./models/lenet300100/lenet_train_test.prototxt'
+weights='./models/lenet300100/lenet300100_iter_10000.caffemodel'
+solver_path='./models/lenet300100/lenet_solver.prototxt'
+es_method='ncs'
+origin_proto_name = './models/lenet300100/lenet_origin.prototxt'
+parallel_file_name = 'tmp_model.caffemodel'
+
+# cpu/gpu
+caffe.set_mode_gpu()
+caffe.set_device(0)
+
+# init solver
+solver = caffe.SGDSolver(solver_path)
+
+acc_constrain=0.08
+niter = 30001
+prune_stop_iter = 15000
+layer_name = ['ip1','ip2','ip3']
+layer_inds = {'ip1':0, 'ip2':1, 'ip3':2}
+crates = {'ip1':0.001, 'ip2':0.001, 'ip3':0.001}
+crates_list = [0.001, 0.001, 0.001]
+gamma = {'ip1':0.0002, 'ip2':0.0002, 'ip3':0.0002}
+gamma_star = 0.0002
+ncs_stepsize = 50
+seed= np.random.randint(1000000) 
+np.random.seed([seed])
+es_cache = {}
+r_count=0
 
 
-class profile:
-    def __init__(self):
-        self.para=dict(paras) #save the  parameters.
-        self.funcs=dict() #save the functions.
-        self.funcs[0]=init
-        self.funcs[3]=single_evaluate
+def start_loop(content,ob=None,solver=solver):
+    '''
+    statu:2
+    content: iternum.
+    '''
+    if content==0:
+        solver.step(1)
+    
+    for itr in range(1,1001):
+        tmp_crates=[]
+        tmp_ind=[]
+        for ii in layer_name:
+            tmp_tag=np.power(1+gamma[ii]*itr,-1) > np.random.rand()
+            if tmp_tag:
+                tmp_ind.append(ii)
+                tmp_crates.append(tmp_tag*crates[ii])
+        if itr<2000 and itr%10000==1:
+            ncs_stepsize/=10.
+        if itr%500==0:
+            print("Compression:{},Accuracy:{}".format(1./get_sparsity(solver.net),test_net(solver.net,_count=1,_start='ip1')))
+        if len(tmp_ind)>0 and itr<prune_stop_iter:
+            _tmp_c=np.array(len(crates_list)*[-1.])
+            for t_name in tmp_ind:
+                _tmp_c[layer_inds[t_name]]=crates[t_name]
+            apply_prune(solver.net,_tmp_c)
+        if itr%1000==0 and len(tmp_ind)>1 and itr<prune_stop_iter:
+            st1=str(tmp_crates)
+            st2=str(tmp_ind)
+            solver.net.save(parallel_file_name)
+            # here....
+    pass
+
+def get_result(content,ob=None,paras=paras):
+    '''
+    statu:10
+    content:result array
+    '''
+    print("The final result is:\n",content)
+    msg=message(499,"result gotton.")
+    ob.send_list.put(msg.msg_encode())
+
+
+    
+    
+
+
+
+#for service program get all the functions defined in this module.
+def get_funcs():
+    dct=dict()
+    dct[0]=init
+    dct[1]=main_program
+    dct[10]=get_result
         

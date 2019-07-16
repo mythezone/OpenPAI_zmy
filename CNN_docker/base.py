@@ -68,7 +68,7 @@ class messager(Process):
     def __init__(self,ob=None,host='locahost',debug=False):
         super().__init__()
         print("Messager initiated.")
-        self.s=socket.socket()
+        #self.s=socket.socket()
         self.ob=ob
         self.msg_list=self.ob.send_list
         self.route=self.ob.route
@@ -88,20 +88,6 @@ class messager(Process):
                 if statu<100:
                     if statu in self.algo_route:
                         next_name=self.algo_route[statu]
-                    else:
-                        print("This statu is not defined in the algorithm, plz check.")
-                        print("Error info:",statu,content)
-                        continue
-                elif 100<=statu<200:
-                    #message with statu in this range will be send to the master server.
-                    next_port=50001
-                elif 400<=statu<500:
-                    print("Test or Info msg:",statu,content)
-                elif statu>10000:
-                    next_port=statu
-                else:
-                    if statu in self.algo_route:
-                        next_name=self.algo_route[statu]
                         if next_name in self.route:
                             next_port=self.route[next_name] 
                         else:
@@ -115,7 +101,18 @@ class messager(Process):
                         print("This statu is not defined in the algorithm, plz check.")
                         print("Error info:",statu,content)
                         continue
-                    
+                elif 100<=statu<200:
+                    #message with statu in this range will be send to the master server.
+                    next_port=50001
+                elif 400<=statu<500:
+                    print("Test or Info msg:",statu,content)
+                elif statu>10000:
+                    next_port=statu
+                else:
+                    print("error :wrong statu ",statu)
+                    continue
+
+                self.s=socket.socket()
                 addr=(self.host,next_port)
                 self.s.connect(addr)
                 new_msg=message(content[0],content[1]).msg_encode()

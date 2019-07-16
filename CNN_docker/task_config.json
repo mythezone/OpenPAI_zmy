@@ -16,9 +16,12 @@
 
     "algo_statu":{
         "0":"init",
-        "1":"loop",
-        "2":"loop2",
-        "3":"main"
+        "1":"main",
+        "2":"loop",
+        "3":"loop2",
+        "4":"evaluation",
+        "10":"result",
+        "99":"main"
     },
 
     "commom_statu":{
@@ -36,6 +39,7 @@
         "403":"specified port with name.",
         "404":"port not found.",
         "466":"server's respons message.",
+        "499":"Completed successfully",
         
         "666":"success",
         "667":"over",

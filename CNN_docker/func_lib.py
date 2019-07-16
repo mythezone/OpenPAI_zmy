@@ -74,16 +74,11 @@ class func:
         self.statu=statu
         self.discrp=discription
         self.f=f
-        # if name==None:
-        #     self.name="Noname_on_%d"%statu
-        # else:
-        #     self.name=name
-
+ 
     def run(self,content):
         return self.f(content)
 
     def help(self):
-        #print("func : %s"%self.name)
         print(self.discrp)    
 
 
@@ -158,7 +153,7 @@ class std_flib(flib_base):
         '''
         Statu:140
         '''
-        ob.show_debug('statu 140: port not found.')
+        ob.show_debug('statu 140: port not found.waiting for the next try.')
 
 
 
@@ -177,7 +172,7 @@ class test:
         self.route=dict()
         self.dct=dict()
         self.send_list=multiprocessing.Queue()
-        self.dct=cf.profile().d
+        #self.dct=cf.profile().d
         self.s=cstm_flib(self.dct,ob=self)
         
     def t(self,msg):
