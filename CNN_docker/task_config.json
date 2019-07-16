@@ -23,9 +23,11 @@
 
     "commom_statu":{
         "101":"port_registry",
-        "102":"request_for_ports",
-        "103":"respons_for_ports",
-        "104":"recved.",
+        "102":"port_registry_respons",
+        "103":"request_for_ports",
+        "104":"respons_for_ports_all",
+        "105":"respons_for_ports_specified",
+        "140":"error_port_not_found",
 
         "233":"work",
 

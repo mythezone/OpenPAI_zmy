@@ -91,31 +91,75 @@ class std_flib(flib_base):
     def __init__(self,ob=None):
         super().__init__()
         self.regist_by_statu(func(101,partial(self.port_registry,ob=ob),discription='Port register.'))
-        self.regist_by_statu(func(102,partial(self.port_request,ob=ob),discription="Port request."))
-
+        self.regist_by_statu(func(102,partial(self.port_registry_respons,ob=ob),discription="Port registry response."))
+        self.regist_by_statu(func(103,partial(self.port_request,ob=ob),discription="Port request."))
+        self.regist_by_statu(func(104,partial(self.get_port_all,ob=ob),discription="get all ports."))
+        self.regist_by_statu(func(105,partial(self.get_port_spec,ob=ob),discription="Get the spec port."))
+        self.regist_by_statu(func(140,partial(self.port_not_found,ob=ob),discription="Port request."))
+        self.debug=ob.debug
+        self.ob=ob
+   
     @staticmethod
     def port_registry(content,ob=None):
+        '''
+        Statu:101
+        '''
         ob.route[content[0]]=content[1]
-        #print(ob.route)
-        new_msg=[401,'Registry succed.']
+        new_msg=[102,'Registry succed.']
         ob.put_to_send_list(content[1],new_msg)
+        ob.show_debug("Registry successed.")
+
+    @staticmethod
+    def port_registry_respons(content,ob=None):
+        '''
+        Statu:102
+        '''
+        print("Statu 102",content)
 
     @staticmethod
     def port_request(content,ob=None):
+        '''
+        Statu:103
+        '''
         if content[1].lower()=='all':
-            new_msg=[402,ob.route]
+            new_msg=[104,ob.route]
             ob.put_to_send_list(content[0],new_msg)
-            print("ports send succefully.")
+            ob.show_debug("ports send succefully.")
         else:
             if content[1] in ob.route:
                 tmp=ob.route[content[1]]
-                new_msg=[403,[tmp,content[1]]]
+                new_msg=[105,[tmp,content[1]]]
                 ob.put_to_send_list(content[0],new_msg)
-                print("port send successfully.")
+                ob.show_debug("port send successfully.")
             else:
-                new_msg=[404,'port not found.']
+                new_msg=[140,'port not found.']
                 ob.put_to_send_list(content[0],new_msg)
-                print("port not found.")
+                ob.show_debug("port not found.")
+
+    @staticmethod
+    def get_port_all(content,ob=None):
+        '''
+        Statu:104
+        '''
+        for i in content:
+            ob.route[i]=content[i]
+        ob.show_debug(ob.route)
+
+    @staticmethod
+    def get_port_spec(content,ob=None):
+        '''
+        Statu:105
+        '''
+        ob.route[content[0]]=content[1]
+        ob.show_debug("the spec info has been added into the route.")
+
+    @staticmethod
+    def port_not_found(content,ob=None):
+        '''
+        Statu:140
+        '''
+        ob.show_debug('statu 140: port not found.')
+
 
 
 class cstm_flib(std_flib):
