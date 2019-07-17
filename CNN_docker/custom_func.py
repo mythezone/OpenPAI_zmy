@@ -395,6 +395,7 @@ def start_loop(content,ob=None,solver=solver):
             st2=str(tmp_ind)
             solver.net.save(parallel_file_name)
             data=solver.net.blobs['data'].data
+            
             # here....
     pass
 
