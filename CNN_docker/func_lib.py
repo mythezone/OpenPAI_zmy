@@ -43,12 +43,12 @@ class message:
 
 class flib_base:
     def __init__(self):
-        self.route=dict()
+        self.algo_route=dict()
         #self.funcs=[]
 
     def get_by_statu(self,statu):
-        if statu in self.route:
-            return self.route[statu]
+        if statu in self.algo_route:
+            return self.algo_route[statu]
         else:
             return self.not_exist_func
 
@@ -58,7 +58,7 @@ class flib_base:
             tmp=func.statu
         else:
             tmp=statu
-        self.route[tmp]=func
+        self.algo_route[tmp]=func
         print("func registed succ.",func.statu)
 
     def not_exist_func(self):
@@ -66,8 +66,8 @@ class flib_base:
 
     def show_all(self):
         print("%5s   %15s"%("statu","function name"))
-        for i in self.route:
-            print("%5d,   %15s"%(i,self.route[i].name))
+        for i in self.algo_route:
+            print("%5d,   %15s"%(i,self.algo_route[i].name))
 
 class func:
     def __init__(self,statu,f, discription='This is the discrp of the function'):
@@ -99,9 +99,13 @@ class std_flib(flib_base):
         '''
         Statu:101
         '''
-        ob.route[content[0]]=content[1]
+        print("The content of msg 101 is:",content)
+        name=content[0]
+        port=content[1]
+        ob.messager.route[name]=port
+        print("route updated",ob.messager.route)
         new_msg=[102,'Registry succed.']
-        ob.put_to_send_list(content[1],new_msg)
+        ob.put_to_send_list(port,new_msg)
         ob.show_debug("Registry successed.")
 
     @staticmethod
@@ -137,7 +141,7 @@ class std_flib(flib_base):
         Statu:104
         '''
         for i in content:
-            ob.route[i]=content[i]
+            ob.messager.route[i]=content[i]
         ob.show_debug(ob.route)
 
     @staticmethod

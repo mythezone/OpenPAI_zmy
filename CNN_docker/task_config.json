@@ -51,7 +51,10 @@
         "901":"string",
         "902":"list",
         "903":"numpy",
-        "904":"file"
+        "904":"request for a file",
+        "905":"response of a file request",
+        "906":"request for sending a file",
+        "907":"response of a sending request"
     }
     
 }
