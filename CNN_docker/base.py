@@ -14,15 +14,14 @@ import hashlib
 
 
 class server(Process):
-    def __init__(self,ob=None,host='localhost',port=50001):
+    def __init__(self,recv_list,send_list,route_dict=dict(),name='master',host='localhost',port=50001):
         Process.__init__(self)
         self.s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.host=host
         self.port=port
-        self.ob=ob
-        self.recv_list=ob.recv_list
-        self.send_list=ob.send_list
-        self.name=ob.name
+        self.recv_list=recv_list
+        self.send_list=send_list
+        self.route=route_dict
         
         if type(port) is int:
             print("init the server on port %d."%port)
@@ -58,13 +57,60 @@ class server(Process):
             #print('Connect with:',addr)
             data=conn.recv(512000)
             print("server recvd data:",data)
-            statu,content=json.loads(data.decode()) 
-            if statu==905:
+            msg=data
+            statu,content=json.loads(data.decode())
+            if statu==101:
+                #port register
+                print("The content of msg 101 is:",content)
+                name,port=content
+                self.route[name]=port
+                print("route updated",self.route)
+                conn.send("Registed succed.".encode())
+
+            elif statu==102:
+                _,file_name,file_path=content
+                filename=file_path+file_name+"new"
+                f=open(filename,'wb')
+                recvd_size=0
+                m=hashlib.md5()
+
+                conn.send('wait for size...'.encode())
+                respon=conn.recv(1024)
+                file_size=int(respon.decode())
+                conn.send('Ready for recv...'.encode())
+                while recvd_size<file_size:
+                    size=0
+                    if file_size-recvd_size>1024:
+                        size=1024
+                    else:
+                        size=file_size-recvd_size
+
+                    data=conn.recv(size)
+                    data_len=len(data)
+                    recvd_size+=data_len
+                    print("\r recvd:",int(recvd_size/file_size*100),"%")
+                    m.update(data)
+                    f.write(data)
+
+                f.close()
+                print("real recvd size:",recvd_size)
+                md5_s=conn.recv(1024).decode()
+                md5_c=m.hexdigest()
+                print("original md5:",md5_s)
+                if md5_c==md5_s:
+                    print("recv success.")
+                    conn.send('s'.encode())
+                else:
+                    print("recv failure.")
+                    conn.send('f'.encode())
+                self.recv_list.put(msg)
+                continue
+                
+            elif statu==905:
                 file_name,file_path=content
                 if os.path.isfile(file_path+file_name):
                     size=os.stat(file_path+file_name).st_size
                     conn.send(str(size).encode())
-
                     conn.recv(1024)
 
                     m=hashlib.md5()
@@ -94,18 +140,12 @@ class server(Process):
                 print("Testing msg recvd:",statu,content)
             
 class messager(Process):
-    def __init__(self,ob=None,host='locahost',debug=False):
+    def __init__(self,recv_list,send_list,host='locahost',debug=False):
         super().__init__()
         print("Messager initiated.")
-        #self.s=socket.socket()
-        self.ob=ob
-        self.send_list=self.ob.send_list
-        self.route=self.ob.route
-        self.algo_route=self.ob.algo_route
+        self.send_list=send_list
         self.host=host
         self.debug=debug
-        self.port=self.ob.server.port
-        self.name=ob.name
 
     def run(self):
         while True:
@@ -117,148 +157,67 @@ class messager(Process):
                 msg=self.send_list.get()
                 statu,content=json.loads(msg.decode())
                 if statu<100:
-                    if statu in self.algo_route:
-                        next_name=self.algo_route[statu]
-                        if next_name in self.ob.route:
-                            next_port=self.ob.route[next_name] 
-                        else:
-                            print('Try to get the needed port.',statu,content)
-                            if self.name=='master':
-                                self.send_list.put(msg)
-                                time.sleep(4)
-                                continue
-                            new_msg=message(102,[self.port,next_name])
-                            self.send_list.put(new_msg.msg_encode)
-                            print("waiting the port respons")
-                            self.send_list.put(msg)
-                            continue
+                    print(statu,content)
+                elif statu==102:
+                    s=socket.socket()
+                    _,file_name,file_path=content
+                    s.connect(('localhost',50001))
+                    s.send(msg)
+                    s_resp=s.recv(1024)
+                    print(s_resp.decode())
+                    file_size=os.stat(file_path+file_name).st_size
+                    s.send(str(file_size).encode())
+                    s_resp=s.recv(1024)
+                    print(s_resp.decode())
+                    f=open(file_path+file_name,'rb')
+                    m=hashlib.md5()
+                    for line in f:
+                        s.send(line)
+                        m.update(line)
+                    f.close()
+
+                    md5=m.hexdigest()
+                    s.send(md5.encode())
+                    print("md5:",md5)
+                    print("sending over.")
+                    flag=s.recv(1024).decode()
+                    if flag=='s':
+                        print("sending success.")
                     else:
-                        print("This statu is not defined in the algorithm, plz check.")
-                        print("Error info:",statu,content)
-                        continue
+                        self.send_list.put(msg)
+                        print("sending fall,try again.")
+                    s.close()
+                    continue
                 elif 100<=statu<200:
                     #message with statu in this range will be send to the master server.
                     next_port=50001
                 elif 400<=statu<500:
-                    print("Test or Info msg:",statu,content)
-                elif statu==904:
-                    '''
-                    message(904,[server_name,file_name])
-                    request for a file from server with file name.
-                    '''
-                    next_name,file_name,file_path=content
-                    if next_name in self.ob.route:
-                        next_port=self.ob.route[next_name] 
-                    else:
-                        print("Now the route is :",self.ob.route)
-                        print('Try to get the needed port.',statu,content)
-                        if self.name=='master':
-                            self.send_list.put(msg)
-                            time.sleep(4)
-                            continue
-                        new_msg=message(102,[self.port,next_name])
-                        self.send_list.put(new_msg.msg_encode)
-                        print("waiting the port respons")
-                        self.send_list.put(msg)
-                        continue
-
-                    self.s=socket.socket()
-                    self.s.connect((self.host,next_port))
-                    self.s.send(message(905,[file_name,file_path]).msg_encode())
-                    server_respons=self.s.recv(1024)
-
-                    try:
-                        file_size=int(server_respons.decode())
-                    except:
-                        print(server_respons.decode())
-                        continue
-
-                    print("recvd size:",file_size)
-
-                    self.s.send("ready for recv file....".encode())
-                    filename=file_path+"new_"+file_name
-                    f=open(filename,'wb')
-                    recvd_size=0
-                    m=hashlib.md5()
-
-                    while recvd_size<file_size:
-                        size=0
-                        if file_size-recvd_size>1024:
-                            size=1024
-                        else:
-                            size=file_size-recvd_size
-                        data=self.s.recv(size)
-                        data_len=len(data)
-                        recvd_size+=data_len
-                        print("\r\n  recvd:",int(recvd_size/file_size*100),"%")
-                        m.update(data)
-                        f.write(data)
-                    
-                    print("real recvd size:",recvd_size)
-                    md5_server=self.s.recv(1024).decode()
-                    md5_client=m.hexdigest()
-                    print("md5 on service:",md5_server)
-                    print("md5 on client:",md5_client)
-                    if md5_client==md5_server:
-                        print("sending success.")
-                        self.s.close()
-                        continue
-                    else:
-                        print("sending fail.preparad for next try....")
-                        self.send_list.put(msg)
-                        self.s.close()
-                        continue
-
-                elif statu==906:
-                    next_name,file_name,file_path=content
-                    if next_name in self.ob.route:
-                        next_port=self.ob.route[next_name]
-                    else:
-                        print('Try to get the needed port.',statu,content)
-                        if self.name=='master':
-                            self.send_list.put(msg)
-                            time.sleep(4)
-                            continue
-
-                        new_msg=message(102,[self.port,next_name])
-                        self.send_list.put(new_msg.msg_encode)
-                        print("waiting the port respons")
-                        self.send_list.put(msg)
-                        continue
-
-                    new_msg=message(907,[self.name,file_name,file_path]).msg_encode()
-                    self.s=socket.socket()
-                    addr=(self.host,next_port)
-                    self.s.connect(addr)
-                    self.s.send(new_msg)
-                    recv=self.s.recv(52000)
-                    print(recv)
-                    self.s.close()
-                    
+                    print("Test or Info msg:",statu,content)                  
 
                 elif statu>10000:
                     next_port=statu
+                    
+
                 else:
                     print("error :wrong statu ",statu)
                     continue
 
-                self.s=socket.socket()
+                s=socket.socket()
                 addr=(self.host,next_port)
-                self.s.connect(addr)
+                s.connect(addr)
                 new_msg=message(content[0],content[1]).msg_encode()
-                self.s.send(new_msg)
-                recv=self.s.recv(52000)
+                s.send(new_msg)
+                recv=s.recv(1024)
                 print(recv)
-                self.s.close()
-                    
+                s.close()
 
 class worker(Process):
-    def __init__(self,ob=None,custom_func=dict()):
+    def __init__(self,recv_list,send_list,func=lambda x:x):
         super().__init__()
-        self.flib=fl.cstm_flib(custom_func,ob=ob)
-        self.ob=ob
-        self.recv_list=ob.recv_list
-        self.send_list=ob.send_list
+        #self.flib=fl.cstm_flib(custom_func,ob=ob)
+        self.recv_list=recv_list
+        self.send_list=send_list
+        self.func=func
         
     def run(self):
         while True:
@@ -268,17 +227,16 @@ class worker(Process):
                 continue
             else:
                 print("There is a msg in recv_list")
-                print("little change")
                 msg=self.recv_list.get()
                 new_msg=message.b2m(msg)
                 new_msg.show()
-                func=self.flib.get_by_statu(new_msg.statu)
-                func.run(new_msg.content)
-       
+
+
+
 class micro_service:
-    def __init__(self,recv_list,send_list,route,*args,func_dct=dict(),\
+    def __init__(self,recv_list,send_list,route,*args,func=lambda x:x,\
         task_config='task_config.json',host='localhost',port=50001,\
-            name='service_name',debug=True,**kargs):
+            name='master',debug=True,**kargs):
         #super().__init__()
         self.recv_list=recv_list
         self.send_list=send_list
@@ -288,6 +246,7 @@ class micro_service:
         self.route=route
         self.route['master']=50001
         self.debug=debug
+        self.func=func
 
         #statu to name.
         if task_config!='':
@@ -301,10 +260,9 @@ class micro_service:
             self.algo_route=dict()
             self.commom_statu=dict()
 
-        self.dct=func_dct
-        self.server=server(ob=self,host=host,port=port)
-        self.messager=messager(ob=self,host=host)
-        self.worker=worker(ob=self,custom_func=self.dct)
+        self.server=server(self.recv_list,self.send_list,self.route,name=self.name,host=host,port=port)
+        self.messager=messager(self.recv_list,self.send_list,host=host)
+        self.worker=worker(self.recv_list,self.send_list,func=self.func)
 
     def put_to_send_list(self,port,content):
         new_msg=message(port,content).msg_encode()
