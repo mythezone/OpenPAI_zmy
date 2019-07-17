@@ -10,19 +10,18 @@ from multiprocessing import Process,Manager
 import func_lib as fl
 from func_lib import message
 import hashlib
-from functools import partial
 #import custom_func as cf
 
 
 class server(Process):
-    def __init__(self,recv_list,send_list,name='master',host='localhost',port=50001):
+    def __init__(self,recv_list,send_list,route_dict=dict(),name='master',host='localhost',port=50001):
         Process.__init__(self)
         self.s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.host=host
         self.port=port
         self.recv_list=recv_list
         self.send_list=send_list
-        # self.route=route_dict
+        self.route=route_dict
         
         if type(port) is int:
             print("init the server on port %d."%port)
@@ -63,10 +62,10 @@ class server(Process):
             if statu==101:
                 #port register
                 print("The content of msg 101 is:",content)
-                #name,port=content
-                self.recv_list.put(msg)
-                # print("route updated",self.route)
-                conn.send("Registed.".encode())
+                name,port=content
+                self.route[name]=port
+                print("route updated",self.route)
+                conn.send("Registed succed.".encode())
 
             elif statu==102:
                 _,file_name,file_path=content
@@ -132,10 +131,10 @@ class server(Process):
                 self.send_list.put(new_msg.msg_encode())
 
             elif statu<400 or statu>=500:
-                print(statu,":",content)
-                #msg=message(statu,content)
-                #self.recv_list.put(msg.msg_encode())
-                conn.send(message(466,'test recved').msg_encode())
+                
+                msg=message(statu,content)
+                self.recv_list.put(msg.msg_encode())
+                conn.send(message(466,'recved').msg_encode())
                 
             else:
                 print("Testing msg recvd:",statu,content)
@@ -189,7 +188,9 @@ class messager(Process):
                         print("sending fall,try again.")
                     s.close()
                     continue
-
+                elif 100<=statu<200:
+                    #message with statu in this range will be send to the master server.
+                    next_port=50001
                 elif 400<=statu<500:
                     print("Test or Info msg:",statu,content)                  
 
@@ -211,15 +212,12 @@ class messager(Process):
                 s.close()
 
 class worker(Process):
-    def __init__(self,recv_list,send_list,route,algo_route=dict(),func=lambda x:x,**kargs):
+    def __init__(self,recv_list,send_list,func=lambda x:x):
         super().__init__()
         #self.flib=fl.cstm_flib(custom_func,ob=ob)
         self.recv_list=recv_list
         self.send_list=send_list
-        self.route=route
-        self.algo_route=algo_route
-        self.kargs=kargs
-        self.func=partial(func,route=self.route,recv_list=self.recv_list,send_list=self.send_list,algo_route=self.algo_route)
+        self.func=func
         
     def run(self):
         while True:
@@ -231,28 +229,12 @@ class worker(Process):
                 print("There is a msg in recv_list")
                 msg=self.recv_list.get()
                 new_msg=message.b2m(msg)
-                statu,content=new_msg.statu,new_msg.content
-                if statu==101:
-                    self.route[content[0]]=content[1]
-                    print('port registed in worker.')
-                # elif statu==102:
-                #     print("file saved",content)
-                #     pass
-                else:
-                    self.func(new_msg)
+                new_msg.show()
 
-                #new_msg.show()
-                
-
-def master_func(msg,route,algo_route,recv_list,send_list):
-    print("work get.",msg.statu,msg.content)
-    next_name=algo_route[msg.statu]
-    next_port=route[next_name]
-    send_list.put(message(next_port,[msg.statu,msg.content]).msg_encode)
 
 
 class micro_service:
-    def __init__(self,recv_list,send_list,route,*args,func=master_func,\
+    def __init__(self,recv_list,send_list,route,*args,func=lambda x:x,\
         task_config='task_config.json',host='localhost',port=50001,\
             name='master',debug=True,**kargs):
         #super().__init__()
@@ -278,9 +260,9 @@ class micro_service:
             self.algo_route=dict()
             self.commom_statu=dict()
 
-        self.server=server(self.recv_list,self.send_list,self.route,host=host,port=port)
+        self.server=server(self.recv_list,self.send_list,self.route,name=self.name,host=host,port=port)
         self.messager=messager(self.recv_list,self.send_list,host=host)
-        self.worker=worker(self.recv_list,self.send_list,self.route,func=self.func)
+        self.worker=worker(self.recv_list,self.send_list,func=self.func)
 
     def put_to_send_list(self,port,content):
         new_msg=message(port,content).msg_encode()
@@ -302,7 +284,6 @@ class micro_service:
 if __name__=="__main__":
     recv_list=multiprocessing.Queue()
     send_list=multiprocessing.Queue()
-    m=Manager().dict()
 
-    ms=micro_service(recv_list,send_list,m)
+    ms=micro_service(recv_list,send_list,dict())
     ms.run()
