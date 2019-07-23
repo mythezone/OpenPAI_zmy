@@ -6,6 +6,9 @@ import time
 import create as cr
 from additional_args import get_args
 import sys
+from log import generate_log_func
+
+log_info = generate_log_func('file', 'loop.txt')
 
 class worker_work(Process):
     def __init__(self, msg_list, server_ip, server_port, master_ip, master_port):
@@ -48,7 +51,7 @@ class worker_work(Process):
         return routes
 
     def run(self):
-        print("The handle of the message has been started!")
+        log_info("The handle of the message has been started!")
         while True:
             if self.msg_list.empty():
                 time.sleep(2)
@@ -59,7 +62,7 @@ class worker_work(Process):
                 new_msg=self.process(msg)
 
                 if new_msg.statu==0:
-                    print(new_msg.content)
+                    log_info(new_msg.content)
                     self.data=new_msg.content
                     self.dist=self.init_distance(self.data)                        
                     msg=message(2, [self.server_ip, self.server_port])
@@ -69,10 +72,10 @@ class worker_work(Process):
                     send_to(message(2,new_msg.content), host=self.next_ip, port=self.next_port)
 
                 elif new_msg.statu==444:
-                    #print("test content:",new_msg.content)
+                    #log_info("test content:",new_msg.content)
                     pass
                 elif new_msg.statu==669:
-                    print("new_msg.content: ",new_msg.content)
+                    log_info("new_msg.content: ",new_msg.content)
 
                 elif new_msg.statu==666:
                     self.next_ip = new_msg.content[0]
@@ -85,20 +88,20 @@ class worker_work(Process):
 
                     for i in range(self.nodes):
                         solutions=self.init_solutions()
-                        #print('solutions:',solutions)
+                        #log_info('solutions:',solutions)
                         msg=message(1,solutions).msg_encode()
                         self.msg_list.put(msg)
 
                 elif new_msg.statu==700:
-                    print('a final result rcvd.')
+                    log_info('a final result rcvd.')
                     self.count+=1
                     self.result.append(new_msg.content)
                     if self.count==self.nodes:
                         sorted_solution=sorted(solutions,key=lambda x:cr.cost(x,self.dist))[0]
-                        print("final result is:",sorted_solution)
-                        print("least cost is :",cr.cost(sorted_solution,self.dist))
+                        log_info("final result is:",sorted_solution)
+                        log_info("least cost is :",cr.cost(sorted_solution,self.dist))
                 else:
-                    print("something wrong! error %d"%new_msg.statu,new_msg.content)
+                    log_info("something wrong! error %d"%new_msg.statu,new_msg.content)
                 
 
 class worker:
@@ -112,12 +115,12 @@ class worker:
                   self.port=np.random.randint(50010,60000)
                 self.server = server(self.msg_list, host=self.ip, port=self.port)
                 self.server.start()
-                print("Server started......")
+                log_info("Server started......")
                 msg=message(101,[name, self.ip, self.port])
                 send_to(msg, master_ip, master_port)
                 break
             except:
-                print("Warning: connection to the master failed!")
+                log_info("Warning: connection to the master failed!")
                 time.sleep(5)
                 continue
                 

@@ -5,6 +5,9 @@ import json
 import time
 import create as cr
 from additional_args import get_args
+from log import generate_log_func
+
+log_info = generate_log_func('file', 'init.txt')
 
 class worker_work(Process):
     def __init__(self, msg_list, server_ip, server_port, master_ip, master_port):
@@ -26,17 +29,17 @@ class worker_work(Process):
         return content
 
     def run(self):
-        print("The handle of the message has been started!")
+        log_info("The handle of the message has been started!")
         while True:
             if self.msg_list.empty():
                 time.sleep(2)
                 continue
             else:
                 msg=self.msg_list.get()
-                #print(msg)
+                #log_info(msg)
                 new_msg=self.process(msg)
                 if new_msg.statu==666:
-                    #print(new_msg.content)
+                    #log_info(new_msg.content)
                     content=self.init_problem()
                     msg=message(0,content)
                     while True:
@@ -48,21 +51,21 @@ class worker_work(Process):
                             time.sleep(2)
                             count+=1
                             if count==10:
-                                print("Try 10 times the server is not ready.Please check the port of the server.")
+                                log_info("Try 10 times the server is not ready.Please check the port of the server.")
                                 break
 
                 elif new_msg.statu==669:
-                    print(new_msg.content)
+                    log_info(new_msg.content)
                     
                     msg=message(1, [self.server_ip, self.server_port])
                     send_to(msg)
                 elif new_msg.statu==444:
                     #port for test
-                    print("Test:",new_msg.content)
+                    log_info("Test:",new_msg.content)
                 elif new_msg.statu==0:
-                    print(new_msg.content)
+                    log_info(new_msg.content)
                 else:
-                    print("something wrong! error %d"%new_msg.statu,new_msg.content)
+                    log_info("something wrong! error %d"%new_msg.statu,new_msg.content)
                 
 class worker:
     def __init__(self,name="loop", ip='localhost', port=0, master_ip='localhost', master_port=50001):
@@ -75,12 +78,12 @@ class worker:
                   self.port=np.random.randint(50010,60000)
                 self.server = server(self.msg_list, host=self.ip, port=self.port)
                 self.server.start()
-                print("Server started......")
+                log_info("Server started......")
                 msg=message(101,[name, self.ip, self.port])
                 send_to(msg, master_ip, master_port)
                 break
             except:
-                print("Warning: connection to the master failed!")
+                log_info("Warning: connection to the master failed!")
                 time.sleep(5)
                 continue
                 

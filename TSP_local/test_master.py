@@ -4,6 +4,9 @@ import multiprocessing
 import json
 import time
 from additional_args import get_args
+from log import generate_log_func
+
+log_info = generate_log_func('file', 'master.txt')
 
 class master_work(Process):
     def __init__(self,msg_list,jobconfig_path='task_config.json'):
@@ -22,7 +25,7 @@ class master_work(Process):
             port=self.route_port[name]
             return ip,port
         except:
-            print("The ip or the port has not been registed!")    
+            log_info("The ip or the port has not been registed!")    
 
     def process(self,msg):
 
@@ -41,14 +44,14 @@ class master_work(Process):
             
 
     def run(self):
-        print("The handle of the message has been started!")
+        log_info("The handle of the message has been started!")
         while True:
             if self.msg_list.empty():
                 time.sleep(2)
                 continue
             else:
                 msg=self.msg_list.get()
-                print(msg)
+                log_info(msg)
                 new_msg=self.process(msg)
                 new_msg.show()
 

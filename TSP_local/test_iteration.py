@@ -5,6 +5,9 @@ import json
 import time
 import create as cr
 from additional_args import get_args
+from log import generate_log_func
+
+log_info = generate_log_func('file', 'iteration.txt')
 
 
 class worker_work(Process):
@@ -60,7 +63,7 @@ class worker_work(Process):
         
 
     def run(self):
-        print("The handle of the message has been started!")
+        log_info("The handle of the message has been started!")
         while True:
             if self.msg_list.empty():
                 time.sleep(2)
@@ -77,41 +80,41 @@ class worker_work(Process):
                     send_to(message(444,new_msg.content), host=self.master_ip, port=self.next_port)
                 
                 elif new_msg.statu==2:
-                    # print(new_msg.content)
+                    # log_info(new_msg.content)
                     solutions=np.array(new_msg.content)
                     solution=self.iteration(solutions,self.matrix)
-                    print("best solution found in this node:",solution)
+                    log_info("best solution found in this node:",solution)
                     msg=message(802,solution)
                     self.msg_list.put(msg.msg_encode())
 
                     
                     if self.get_next_port_flag:
-                        print("get next port")
+                        log_info("get next port")
                         msg=message(1, [self.server_ip, self.server_port])
                         send_to(msg, self.master_ip, self.master_port)
                         self.get_next_port_flag=False
                     
 
                 elif new_msg.statu==444:
-                    print("your test msg recvd.")
+                    log_info("your test msg recvd.")
 
                 elif new_msg.statu==666:
                     self.next_ip = new_msg.content[0]
                     self.next_port = new_msg.content[1]
-                    #print("next port is:",self.next_port)
+                    #log_info("next port is:",self.next_port)
                     msg=message(444,'your message has been processed.')
                     send_to(msg, host=self.next_ip, port=self.next_port)
                     
                 elif new_msg.statu==669:
-                    print("new_msg.content: ",new_msg.content)
+                    log_info("new_msg.content: ",new_msg.content)
                     
 
                 elif new_msg.statu==801:
-                    print('the distance matrix recived.')
+                    log_info('the distance matrix recived.')
                     self.matrix=np.array(new_msg.content)
 
                 elif new_msg.statu==802:
-                    #print("ready to send a best solution!")
+                    #log_info("ready to send a best solution!")
                     if self.next_port==0:
                         self.msg_list.put(msg)
                         continue
@@ -120,7 +123,7 @@ class worker_work(Process):
                         send_to(msg, host=self.next_ip, port=self.next_port)
                     
                 else:
-                    print("something wrong! error %d"%new_msg.statu,new_msg.content)
+                    log_info("something wrong! error %d"%new_msg.statu,new_msg.content)
                 
 
 class worker:
@@ -134,12 +137,12 @@ class worker:
                   self.port=np.random.randint(50010,60000)
                 self.server = server(self.msg_list, host=self.ip, port=self.port)
                 self.server.start()
-                print("Server started......")
+                log_info("Server started......")
                 msg=message(101,[name, self.ip, self.port])
                 send_to(msg, master_ip, master_port)
                 break
             except:
-                print("Warning: connection to the master failed!")
+                log_info("Warning: connection to the master failed!")
                 time.sleep(5)
                 continue
                 

@@ -7,6 +7,9 @@ import base64
 import json
 import multiprocessing
 from multiprocessing import Process
+from log import generate_log_func
+
+log_info = generate_log_func('file', 'network.txt')
 
 
 class message:
@@ -33,16 +36,16 @@ class message:
         elif statu==902:
             return content
         else:
-            print("check your msg type!")
+            log_info("check your msg type!")
         return content
 
     def show(self):
-        print('statu: ',self.m[0],'; content: ',self.m[1])
+        log_info('statu: ',self.m[0],'; content: ',self.m[1])
 
 class server(Process):
     def __init__(self,msg_list,host='localhost',port=50001):
         Process.__init__(self)
-        print("init the server on port %d."%port)
+        log_info("init the server on port %d."%port)
         self.s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.host=host
         self.port=port
@@ -50,16 +53,16 @@ class server(Process):
         try:
             self.s.bind((self.host,self.port))
         except:
-            print("bind error.")
+            log_info("bind error.")
             #exit()
 
     def run(self):
         self.s.listen(5)
         while True:
             conn,_=self.s.accept()
-            #print('Connect with:',addr)
+            #log_info('Connect with:',addr)
             data=conn.recv(512000)
-            print("data:",data)
+            log_info("data:",data)
             statu,content=json.loads(data.decode()) 
             msg=message(statu,content)
             #msg.show()
@@ -86,4 +89,4 @@ if __name__=="__main__":
 
     s=server(msgl)
     s.start()
-    print("Server started.")
+    log_info("Server started.")
