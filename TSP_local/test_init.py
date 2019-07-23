@@ -13,7 +13,7 @@ class worker_work(Process):
         self.server_ip = server_ip
         self.server_port = server_port
         self.master_ip = master_ip
-	self.master_port = master_port
+        self.master_port = master_port
 
     def process(self,msg):
         statu,content=json.loads(msg.decode())
