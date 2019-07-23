@@ -22,12 +22,10 @@ class message:
         self.m=[statu,content]
 
     def msg_encode(self):
-        #return str(self.m).encode()
-        msg=json.dumps(self.m).encode()
-        return msg
+        return str(self.m).encode()
     
     def msg_decode(self,msg):
-        statu,content=json.loads(msg.decode())
+        statu,content=eval(msg)
         if statu==901:
             return content
         elif statu==902:
@@ -56,16 +54,46 @@ class server(Process):
     def run(self):
         self.s.listen(5)
         while True:
-            conn,_=self.s.accept()
+            conn,addr=self.s.accept()
             #print('Connect with:',addr)
-            data=conn.recv(512000)
-            print("data:",data)
-            statu,content=json.loads(data.decode()) 
+            data=conn.recv(51200).decode()
+            statu,content=eval(data) 
             msg=message(statu,content)
             #msg.show()
             self.msg_list.put(msg.msg_encode())
             conn.send(message(669,'recved').msg_encode())
-            
+
+class message_handler(Process):
+    def __init__(self,handler,route,msg_list):
+        Process.__init__(self)
+        self.handler=handler
+        self.route=route
+        self.msg_list=msg_list
+
+    def route_update(self,msg):
+        self.route[msg.statu]=msg.content
+
+    def route_get(self,msg):
+        if msg.statu in self.route:
+            return self.route[msg.statu]
+        else:
+            return 0
+
+    def process(self,msg):
+        try:
+            new_msg=self.handler(msg)
+            return new_msg
+        except:
+            return message(404,'error')
+
+    def run(self):
+        while True:
+            if self.msg_list.empty():
+                time.sleep(2)
+            else:
+                msg=self.msg_list.get()
+
+
 
 def send_to(msg,host='localhost',port=50001):
     client=socket.socket()
@@ -73,13 +101,15 @@ def send_to(msg,host='localhost',port=50001):
     client.connect(addr)
     content=msg.msg_encode()
     client.send(content)
-    recv=client.recv(512000)
-    statu,content=json.loads(recv.decode())
+    recv=client.recv(51200).decode()
+    statu,content=eval(recv)
     recv_msg=message(statu,content)
     #recv_msg.show()
     client.close()
     return recv_msg
     
+
+
 
 if __name__=="__main__":
     msgl=multiprocessing.Queue()
