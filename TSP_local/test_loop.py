@@ -96,6 +96,7 @@ class worker_work(Process):
                         sorted_solution=sorted(solutions,key=lambda x:cr.cost(x,self.dist))[0]
                         print("final result is:",sorted_solution)
                         print("least cost is :",cr.cost(sorted_solution,self.dist))
+                    exit()
                 else:
                     print("something wrong! error %d"%new_msg.statu,new_msg.content)
                 
