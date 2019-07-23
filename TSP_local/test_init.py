@@ -4,14 +4,16 @@ import multiprocessing
 import json
 import time
 import create as cr
-
-
+from additional_args import get_args
 
 class worker_work(Process):
-    def __init__(self,msg_list,server_port):
+    def __init__(self, msg_list, server_ip, server_port, master_ip, master_port):
         Process.__init__(self)
         self.msg_list=msg_list
-        self.server_port=server_port
+        self.server_ip = server_ip
+        self.server_port = server_port
+        self.master_ip = master_ip
+	self.master_port = master_port
 
     def process(self,msg):
         statu,content=json.loads(msg.decode())
@@ -40,7 +42,7 @@ class worker_work(Process):
                     while True:
                         count=0
                         try:
-                            send_to(msg,port=new_msg.content)
+                            send_to(msg, host=new_msg.content[0], port=new_msg.content[1])
                             break
                         except:
                             time.sleep(2)
@@ -52,7 +54,7 @@ class worker_work(Process):
                 elif new_msg.statu==669:
                     print(new_msg.content)
                     
-                    msg=message(1,self.server_port)
+                    msg=message(1, [self.server_ip, self.server_port])
                     send_to(msg)
                 elif new_msg.statu==444:
                     #port for test
@@ -62,27 +64,38 @@ class worker_work(Process):
                 else:
                     print("something wrong! error %d"%new_msg.statu,new_msg.content)
                 
-
 class worker:
-    def __init__(self,name="init",host='localhost'):
+    def __init__(self,name="loop", ip='localhost', port=0, master_ip='localhost', master_port=50001):
         self.msg_list=multiprocessing.Queue()
+        self.ip = ip 
+        self.port = port
         while True:
             try:
-                self.port=np.random.randint(50010,60000)
-                self.server=server(self.msg_list,host=host,port=self.port)
+                if self.port == 0: 
+                  self.port=np.random.randint(50010,60000)
+                self.server = server(self.msg_list, host=self.ip, port=self.port)
                 self.server.start()
                 print("Server started......")
-                msg=message(101,[name,self.port])
-                send_to(msg)
+                msg=message(101,[name, self.ip, self.port])
+                send_to(msg, master_ip, master_port)
                 break
             except:
-                pass
-        self.master_work=worker_work(self.msg_list,self.port)
+                print("Warning: connection to the master failed!")
+                time.sleep(5)
+                continue
+                
+        self.master_work = worker_work(self.msg_list, self.ip, self.port, master_ip, master_port)
 
     def run(self):
         self.master_work.start()
 
-
 if __name__=='__main__':
-    m=worker()
+    args = get_args()
+    master_ip = args.master_ip_list.split(',')[0]#Suppose there is only one master
+    master_port = int(args.master_port_list.split(',')[0])
+    worker_ip_list = args.worker_ip_list.split(',')
+    worker_port_list = [int(x) for x in args.worker_port_list.split(',')]
+    task_role_index = args.task_role_index
+
+    m=worker(name='init', ip=worker_ip_list[task_role_index], port=worker_port_list[task_role_index], master_ip=master_ip, master_port=master_port)
     m.run()

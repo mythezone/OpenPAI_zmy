@@ -51,7 +51,7 @@ class server(Process):
             self.s.bind((self.host,self.port))
         except:
             print("bind error.")
-            exit()
+            #exit()
 
     def run(self):
         self.s.listen(5)
