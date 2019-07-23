@@ -1,8 +1,0 @@
-('Server started......',)
-('Warning: connection to the master failed!',)
-('Server started......',)
-('Warning: connection to the master failed!',)
-('Server started......',)
-('Warning: connection to the master failed!',)
-('Server started......',)
-('Warning: connection to the master failed!',)

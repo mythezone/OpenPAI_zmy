@@ -58,7 +58,7 @@ class worker_work(Process):
                     log_info(new_msg.content)
                     
                     msg=message(1, [self.server_ip, self.server_port])
-                    send_to(msg)
+                    send_to(msg, self.master_ip, self.master_port)
                 elif new_msg.statu==444:
                     #port for test
                     log_info("Test:",new_msg.content)
