@@ -97,5 +97,6 @@ if __name__=='__main__':
     worker_port_list = [int(x) for x in args.worker_port_list.split(',')]
     task_role_index = args.task_role_index
 
+    time.sleep(60)# in case of this program and the master are starting before other two
     m=worker(name='init', ip=worker_ip_list[task_role_index], port=worker_port_list[task_role_index], master_ip=master_ip, master_port=master_port)
     m.run()
