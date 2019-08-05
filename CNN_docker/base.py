@@ -14,14 +14,13 @@ import hashlib
 
 
 class server(Process):
-    def __init__(self,recv_list,send_list,route_dict=dict(),name='master',host='localhost',port=50001):
+    def __init__(self,recv_list,send_list,name='master',host='localhost',port=50001):
         Process.__init__(self)
         self.s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.host=host
         self.port=port
         self.recv_list=recv_list
         self.send_list=send_list
-        self.route=route_dict
         
         if type(port) is int:
             print("init the server on port %d."%port)
@@ -61,11 +60,8 @@ class server(Process):
             statu,content=json.loads(data.decode())
             if statu==101:
                 #port register
-                print("The content of msg 101 is:",content)
-                name,port=content
-                self.route[name]=port
-                print("route updated",self.route)
-                conn.send("Registed succed.".encode())
+                print("The registry msg 101 is:",content)
+                self.recv_list.put(msg)
 
             elif statu==102:
                 _,file_name,file_path=content
@@ -105,37 +101,10 @@ class server(Process):
                     conn.send('f'.encode())
                 self.recv_list.put(msg)
                 continue
-                
-            elif statu==905:
-                file_name,file_path=content
-                if os.path.isfile(file_path+file_name):
-                    size=os.stat(file_path+file_name).st_size
-                    conn.send(str(size).encode())
-                    conn.recv(1024)
-
-                    m=hashlib.md5()
-                    f=open(file_path+file_name,'rb')
-                    for line in f:
-                        conn.send(line)
-                        m.update(line)
-                    f.close()
-
-                    md5=m.hexdigest()
-                    conn.send(md5.encode())
-                    print("md5:",md5)
-                else:
-                    conn.send("file you needed is not found.")
-                    print("file not found...")
-            elif statu==907:
-                new_msg=message(904,content)
-                self.send_list.put(new_msg.msg_encode())
 
             elif statu<400 or statu>=500:
-                
-                msg=message(statu,content)
-                self.recv_list.put(msg.msg_encode())
+                self.recv_list.put(msg)
                 conn.send(message(466,'recved').msg_encode())
-                
             else:
                 print("Testing msg recvd:",statu,content)
             
@@ -157,7 +126,8 @@ class messager(Process):
                 msg=self.send_list.get()
                 statu,content=json.loads(msg.decode())
                 if statu<100:
-                    print(statu,content)
+                    next_port=50001
+                    new_msg=msg
                 elif statu==102:
                     s=socket.socket()
                     _,file_name,file_path=content
@@ -188,16 +158,14 @@ class messager(Process):
                         print("sending fall,try again.")
                     s.close()
                     continue
-                elif 100<=statu<200:
-                    #message with statu in this range will be send to the master server.
-                    next_port=50001
+
                 elif 400<=statu<500:
-                    print("Test or Info msg:",statu,content)                  
+                    print("Test or Info msg:",statu,content)
+                    continue        
 
                 elif statu>10000:
                     next_port=statu
-                    
-
+                    new_msg=message(content[0],content[1]).msg_encode()
                 else:
                     print("error :wrong statu ",statu)
                     continue
@@ -205,19 +173,20 @@ class messager(Process):
                 s=socket.socket()
                 addr=(self.host,next_port)
                 s.connect(addr)
-                new_msg=message(content[0],content[1]).msg_encode()
+                # new_msg=message(content[0],content[1]).msg_encode()
                 s.send(new_msg)
                 recv=s.recv(1024)
                 print(recv)
                 s.close()
 
 class worker(Process):
-    def __init__(self,recv_list,send_list,func=lambda x:x):
+    def __init__(self,recv_list,send_list,algo_route=dict(),work=lambda statu,content:print(statu,content)):
         super().__init__()
         #self.flib=fl.cstm_flib(custom_func,ob=ob)
         self.recv_list=recv_list
         self.send_list=send_list
-        self.func=func
+        self.route=dict()
+        self.algo_route=algo_route
         
     def run(self):
         while True:
@@ -226,15 +195,34 @@ class worker(Process):
                 #print("No msg in recvlist")
                 continue
             else:
-                print("There is a msg in recv_list")
+                
                 msg=self.recv_list.get()
+                print("There is a msg in recv_list",msg.decode())
                 new_msg=message.b2m(msg)
-                new_msg.show()
+                statu,content=new_msg.statu,new_msg.content
+                if statu==101:
+                    self.route[content[0]]=content[1]
+                else:
+                    if statu in self.algo_route:
+                        next_name=self.algo_route[statu]
+                        if next_name in self.route:
+                            next_port=self.route[next_name]
+                            send_msg=message(next_port,[msg.statu,msg.content]).msg_encode()
+                            self.send_list.put(send_msg)
+                        else:
+                            self.recv_list.put(msg)
+                            print("the port has not been registed ,please wait.")
+                            time.sleep(2)
+
+                    else:
+                        #self.recv_list.put(msg)
+                        print("the algo route is not exist.")
+                    
 
 
 
 class micro_service:
-    def __init__(self,recv_list,send_list,route,*args,func=lambda x:x,\
+    def __init__(self,recv_list,send_list,route,*args,\
         task_config='task_config.json',host='localhost',port=50001,\
             name='master',debug=True,**kargs):
         #super().__init__()
@@ -246,7 +234,6 @@ class micro_service:
         self.route=route
         self.route['master']=50001
         self.debug=debug
-        self.func=func
 
         #statu to name.
         if task_config!='':
@@ -260,9 +247,9 @@ class micro_service:
             self.algo_route=dict()
             self.commom_statu=dict()
 
-        self.server=server(self.recv_list,self.send_list,self.route,name=self.name,host=host,port=port)
+        self.server=server(self.recv_list,self.send_list,name=self.name,host=host,port=port)
         self.messager=messager(self.recv_list,self.send_list,host=host)
-        self.worker=worker(self.recv_list,self.send_list,func=self.func)
+        self.worker=worker(self.recv_list,self.send_list,algo_route=self.algo_route)
 
     def put_to_send_list(self,port,content):
         new_msg=message(port,content).msg_encode()
