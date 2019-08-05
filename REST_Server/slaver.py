@@ -4,7 +4,7 @@ textmod = parse.urlencode(textmod)
 print(textmod)
 #输出内容:user=admin&password=admin
 header_dict = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko'}
-url='http://localhost:5000/k'
+url='http://localhost:5000/user/ask/log/12312'
 req = request.Request(url=url,headers=header_dict)
 res = request.urlopen(req)
 res = res.read()
