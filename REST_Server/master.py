@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask,render_template,request,redirect,url_for
+from werkzeug import secure_filename
 from base_class import *
 
 app=Flask(__name__)
@@ -64,11 +65,25 @@ def ask_model():
         res+=i.show_info()+'\r\n'
     return res
 
-
 #提交数据-上传
+@app.route('/upload')
+def upload_file():
+    return render_template('./upload.html')
+
+@app.route('/uploader',methods=['GET','POST'])
+def upload_file1():
+    if request.method=='POST':
+        f=request.files['file']
+        f.save(secure_filename(f.filename))
+        return 'file uploaded succefully'
+
+
+
 @app.route('/user/upload/data/<path>')
 def upload_data(path):
-    pass
+    app.config['UPLOAD_FOLDER']='./data/'
+    return redirect(url_for('upload_file'))
+
 
 @app.route('/user/upload/model/<path>')
 def upload_model(path):
@@ -110,4 +125,5 @@ def task_log(task_id):
 
 if __name__=="__main__":
     #app.run(host, port, debug, options)
+    app.config['UPLOAD_FOLDER']='./data'
     app.run(debug=True)
