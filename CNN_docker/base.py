@@ -13,6 +13,15 @@ import hashlib
 #import custom_func as cf
 
 
+def wait_file(path,name):
+    while True:
+        ff=os.listdir(path)
+        if name in ff:
+            return path+name
+        else:
+            time.sleep(1)
+            continue
+
 class server(Process):
     def __init__(self,recv_list,send_list,name='master',host='localhost',port=50001):
         Process.__init__(self)
@@ -269,8 +278,10 @@ class micro_service:
         
 
 if __name__=="__main__":
-    recv_list=multiprocessing.Queue()
-    send_list=multiprocessing.Queue()
+    # recv_list=multiprocessing.Queue()
+    # send_list=multiprocessing.Queue()
 
-    ms=micro_service(recv_list,send_list,dict())
-    ms.run()
+    # ms=micro_service(recv_list,send_list,dict())
+    # ms.run()
+    k=wait_file('./','init.py')
+    print(k)

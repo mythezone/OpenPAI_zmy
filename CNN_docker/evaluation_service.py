@@ -6,10 +6,10 @@ import sys
 import caffe
 import numpy as np
 from lcg_random import lcg_rand
-import ncs
 from easydict import EasyDict as edict
 import time
 import pdb
+from base import *
 
 
 # model files
@@ -121,7 +121,8 @@ def single_evaluate(the_input,x,batchcount,acc):
     #print("files",files)
     # s = caffe.SGDSolver(solver_path)
     #print("S loaded.")
-    fi=hdfs_get_file('/shared/work/','tmp_model.caffemodel','./')
+    #fi=hdfs_get_file('/shared/work/','tmp_model.caffemodel','./')
+    fi='./work/tmp_model.caffemodel'
     print("model getted,prepare for calculating.")
     solver.net.copy_from(fi)
     print("solver net has loaded.")
@@ -142,33 +143,84 @@ def single_evaluate(the_input,x,batchcount,acc):
 
 #the_input_batch = sc.broadcast(solver.net.blobs['data'].data)
 time.sleep(5)
-f=wait_hdfs_file('/shared/work/','data.npy')
-the_input_batch= np.load(f)
-#the_input_batch = np.load('work/data.npy')
-hdfs_client=pyhdfs.HdfsClient('10.20.37.175',9000)
-while True:
-    '''
-    this loop will wait for the solution file, and return [arrary of solutions,array of fitnesses] in a file.
-    '''
-    files=hdfs_client.listdir('/shared/work/')
-    for f in files:
-      if f.startswith('solution'):
-        accuracy=hdfs_load('/shared/work/','accuracy.npy')
-        print("get a solution,calculating...version:2")
-        ff=hdfs_load('/shared/work/',f,delete=True)
-        print("ff",ff)
-        #hdfs_client.delete('/shared/work/'+f)
-        fit=single_evaluate(the_input_batch,ff,1,accuracy)
-        #fit=np.random.uniform(0,1)
-        fn='fit_'+f
-        np.save(fn,np.array([ff,fit]))
-        print("npy file has been setted!")
-        try:
-          hdfs_set_file('./','/shared/work/',fn)
-        except:
-          pass
+
+class evaluation_worker(Process):
+  def __init__(self,recv_list,send_list,host='localhost',debug=True):
+    super().__init__()
+    self.recv_list=recv_list
+    self.send_list=send_list
+    self.host=host
+    self.debug=debug
+    self.accuracy=0
+    self.data=None
+    
+
+  def run(self):
+    print("evaluation service is running....")
+    while True:
+      if self.recv_list.empty():
         time.sleep(1)
-        os.remove(fn)
-        hdfs_client.delete('/shared/work/'+f)
-        print("OK,fitness has been setted.  waiting for the next evaluation.")
-    time.sleep(1)
+        continue
+      else:
+        msg=self.recv_list.get()
+        statu,content=json.loads(msg.decode())
+        if statu==51:
+          self.data=content
+        elif statu==52:
+          self.accuracy=content
+        elif statu==53:
+          solution=content
+          fit=single_evaluate(self.data,solution,1,self.accuracy)
+          msg=message(4,list([solution,fit])).msg_encode()
+          self.send_list.put(msg)
+
+
+
+
+if __name__ == "__main__":
+
+  #f=wait_hdfs_file('/shared/work/','data.npy')
+  f=wait_file('./work/','data.npy')
+  the_input_batch= np.load(f)
+  #the_input_batch = np.load('work/data.npy')
+  #hdfs_client=pyhdfs.HdfsClient('10.20.37.175',9000)
+
+  recv_list=multiprocessing.Queue()
+  send_list=multiprocessing.Queue()
+
+  ser=server(recv_list,send_list,name='evaluation',host='localhost',port=50005)
+  msg=messager(recv_list,send_list)
+  wkr=evaluation_worker(recv_list,send_list)
+
+  ser.start()
+  msg.start()
+  wkr.start()
+
+  # while True:
+  #     '''
+  #     this loop will wait for the solution file, and return [arrary of solutions,array of fitnesses] in a file.
+  #     '''
+  #     files=os.listdir('./work/')
+  #     for f in files:
+  #       if f.startswith('solution'):
+  #         af=wait_file('./work/','accuracy.npy')
+  #         #@accuracy=hdfs_load('/shared/work/','accuracy.npy')
+  #         accuracy=np.load(af)
+  #         print("get a solution,calculating...version:2")
+  #         ff=np.load(f)
+  #         print("ff",ff)
+  #         #hdfs_client.delete('/shared/work/'+f)
+  #         fit=single_evaluate(the_input_batch,ff,1,accuracy)
+  #         #fit=np.random.uniform(0,1)
+  #         fn='fit_'+f
+  #         np.save(fn,np.array([ff,fit]))
+  #         print("npy file has been setted!")
+  #         try:
+  #           hdfs_set_file('./','/shared/work/',fn)
+  #         except:
+  #           pass
+  #         time.sleep(1)
+  #         os.remove(fn)
+  #         hdfs_client.delete('/shared/work/'+f)
+  #         print("OK,fitness has been setted.  waiting for the next evaluation.")
+  #     time.sleep(1)

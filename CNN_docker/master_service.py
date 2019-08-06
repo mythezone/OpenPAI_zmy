@@ -18,7 +18,10 @@ algo=dict({
     2:'main',
     3:'loop1',
     4:'loop2',
-    5:'evaluation'
+    5:'evaluation',
+    51:'evaluation',
+    52:'evalutaion',
+    53:'evaluation'
 })
 
 class master_worker(Process):
