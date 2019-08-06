@@ -10,7 +10,7 @@ import ncs
 from easydict import EasyDict as edict
 import time
 import pdb
-from pai_pyhdfs import *
+
 
 # model files
 proto='./models/lenet300100/lenet_train_test.prototxt'
