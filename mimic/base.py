@@ -7,10 +7,45 @@ import base64
 import json
 import multiprocessing
 from multiprocessing import Process,Manager
-import func_lib as fl
-from func_lib import message
 import hashlib
 #import custom_func as cf
+
+class message:
+    def __init__(self,statu,content):
+        self.statu=statu
+        self.content=content
+        self.m=[statu,content]
+
+    def msg_encode(self):
+        #return str(self.m).encode()
+        msg=json.dumps(self.m).encode()
+        return msg
+
+    #@staticmethod
+    def msg_decode(self,msg):
+        statu,content=json.loads(msg.decode())
+        # if statu==901:
+        #     return content
+        # elif statu==902:
+        #     return content
+        # else:
+        #     print("check your msg type!")
+        return statu,content
+
+    @staticmethod
+    def b2m(msg):
+        """
+        a static method of the class message,used to change the binary message recvd from the socket into a message class entity.
+        """
+        try:
+            tmp=msg.decode()
+        except:
+            tmp=msg
+        statu,content=json.loads(tmp)
+        return message(statu,content)
+
+    def show(self):
+        print('statu: ',self.m[0],'; content: ',self.m[1])
 
 
 def wait_file(path,name):
@@ -49,7 +84,7 @@ class server(Process):
                     counter+=1
                     if counter>=10:
                         print("Tried 10 times but failed, check your code plz.")
-                        break
+                        exit()
                     continue
 
         #if this isnot the master server,then registe its port.
@@ -70,6 +105,7 @@ class server(Process):
             if statu==101:
                 #port register
                 print("The registry msg 101 is:",content)
+                # new_msg=message(content[0],content[1]).msg_encode()
                 self.recv_list.put(msg)
 
             elif statu==102:
@@ -125,7 +161,9 @@ class messager(Process):
         self.host=host
         self.debug=debug
 
+
     def run(self):
+        next_port=50001
         while True:
             if self.send_list.empty():
                 time.sleep(2)
@@ -137,6 +175,16 @@ class messager(Process):
                 if statu<100:
                     next_port=50001
                     new_msg=msg
+                    s=socket.socket()
+                    addr=(self.host,next_port)
+                    s.connect(addr)
+                    # new_msg=message(content[0],content[1]).msg_encode()
+                    s.send(new_msg)
+                    recv=s.recv(1024)
+                    print(recv)
+                    s.close()
+                    continue
+
                 elif statu==102:
                     s=socket.socket()
                     _,file_name,file_path=content
@@ -175,20 +223,29 @@ class messager(Process):
                 elif statu>10000:
                     next_port=statu
                     new_msg=message(content[0],content[1]).msg_encode()
+                    s=socket.socket()
+                    addr=(self.host,next_port)
+                    s.connect(addr)
+                    # new_msg=message(content[0],content[1]).msg_encode()
+                    s.send(new_msg)
+                    recv=s.recv(1024)
+                    print(recv)
+                    s.close()
+                    continue
                 else:
                     print("error :wrong statu ",statu)
                     continue
 
-                s=socket.socket()
-                addr=(self.host,next_port)
-                s.connect(addr)
-                # new_msg=message(content[0],content[1]).msg_encode()
-                s.send(new_msg)
-                recv=s.recv(1024)
-                print(recv)
-                s.close()
+                # s=socket.socket()
+                # addr=(self.host,next_port)
+                # s.connect(addr)
+                # # new_msg=message(content[0],content[1]).msg_encode()
+                # s.send(new_msg)
+                # recv=s.recv(1024)
+                # print(recv)
+                # s.close()
 
-class worker(Process):
+class master_worker(Process):
     def __init__(self,recv_list,send_list,algo_route=dict()):
         super().__init__()
         #self.flib=fl.cstm_flib(custom_func,ob=ob)
@@ -211,6 +268,8 @@ class worker(Process):
                 statu,content=new_msg.statu,new_msg.content
                 if statu==101:
                     self.route[content[0]]=content[1]
+                    print("now the route is : ")
+                    print(self.route)
                 else:
                     if statu in self.algo_route:
                         next_name=self.algo_route[statu]
@@ -230,51 +289,51 @@ class worker(Process):
 
 
 
-# class micro_service:
-#     def __init__(self,recv_list,send_list,route,*args,\
-#         task_config='task_config.json',host='localhost',port=50001,\
-#             name='master',debug=True,**kargs):
-#         #super().__init__()
-#         self.recv_list=recv_list
-#         self.send_list=send_list
-#         self.args=args
-#         self.name=name
-#         self.kargs=kargs 
-#         self.route=route
-#         self.route['master']=50001
-#         self.debug=debug
+class micro_service:
+    def __init__(self,recv_list,send_list,route,*args,\
+        task_config='task_config.json',host='localhost',port=50001,\
+            name='master',debug=True,**kargs):
+        #super().__init__()
+        self.recv_list=recv_list
+        self.send_list=send_list
+        self.args=args
+        self.name=name
+        self.kargs=kargs 
+        self.route=route
+        self.route['master']=50001
+        self.debug=debug
 
-#         #statu to name.
-#         if task_config!='':
-#             with open(task_config,'r') as ff:
-#                 tmp=json.loads(ff.read())
-#                 self.help=tmp['comment']
-#                 self.algo_route=tmp['algo_statu']
-#                 self.commom_statu=tmp['commom_statu']
-#         else:
-#             self.help=dict()
-#             self.algo_route=dict()
-#             self.commom_statu=dict()
+        #statu to name.
+        if task_config!='':
+            with open(task_config,'r') as ff:
+                tmp=json.loads(ff.read())
+                self.help=tmp['comment']
+                self.algo_route=tmp['algo_statu']
+                self.commom_statu=tmp['commom_statu']
+        else:
+            self.help=dict()
+            self.algo_route=dict()
+            self.commom_statu=dict()
 
-#         self.server=server(self.recv_list,self.send_list,name=self.name,host=host,port=port)
-#         self.messager=messager(self.recv_list,self.send_list,host=host)
-#         self.worker=worker(self.recv_list,self.send_list,algo_route=self.algo_route)
+        self.server=server(self.recv_list,self.send_list,name=self.name,host=host,port=port)
+        self.messager=messager(self.recv_list,self.send_list,host=host)
+        self.worker=worker(self.recv_list,self.send_list,algo_route=self.algo_route)
 
-#     def put_to_send_list(self,port,content):
-#         new_msg=message(port,content).msg_encode()
-#         self.send_list.put(new_msg)
+    def put_to_send_list(self,port,content):
+        new_msg=message(port,content).msg_encode()
+        self.send_list.put(new_msg)
 
-#     def show_debug(self,*args):
-#         if self.debug==True:
-#             for i in args:
-#                 print(i)
-#         else:
-#             return
+    def show_debug(self,*args):
+        if self.debug==True:
+            for i in args:
+                print(i)
+        else:
+            return
 
-#     def run(self):
-#         self.server.start()
-#         self.messager.start()
-#         self.worker.start()
+    def run(self):
+        self.server.start()
+        self.messager.start()
+        self.worker.start()
         
 
 if __name__=="__main__":
