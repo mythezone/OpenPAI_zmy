@@ -8,7 +8,6 @@ import json
 import multiprocessing
 from multiprocessing import Process,Manager
 import hashlib
-#import custom_func as cf
 
 class message:
     def __init__(self,statu,content):
@@ -24,12 +23,6 @@ class message:
     #@staticmethod
     def msg_decode(self,msg):
         statu,content=json.loads(msg.decode())
-        # if statu==901:
-        #     return content
-        # elif statu==902:
-        #     return content
-        # else:
-        #     print("check your msg type!")
         return statu,content
 
     @staticmethod

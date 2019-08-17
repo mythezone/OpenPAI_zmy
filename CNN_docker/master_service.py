@@ -26,7 +26,7 @@ algo=dict({
 
 class master_worker(Process):
     def __init__(self,recv_list,send_list,host='localhost',debug=True):
-        super().__init__()
+        Process.__init__(self)
         
         self.send_list=send_list
         self.recv_list=recv_list
