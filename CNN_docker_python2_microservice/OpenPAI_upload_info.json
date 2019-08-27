@@ -1,0 +1,121 @@
+{
+    "name": "TSP_demo_container_test_b2b9cb2f",
+    "jobStatus": {
+        "username": "admin",
+        "state": "RUNNING",
+        "subState": "APPLICATION_RUNNING",
+        "executionType": "START",
+        "retries": 0,
+        "retryDetails": {
+            "user": 0,
+            "platform": 0,
+            "resource": 0
+        },
+        "createdTime": 1566215189623,
+        "completedTime": null,
+        "appId": "application_1565658542262_0002",
+        "appProgress": 0,
+        "appTrackingUrl": "http://10.20.37.175:8088/proxy/application_1565658542262_0002/",
+        "appLaunchedTime": 1566215196087,
+        "appCompletedTime": null,
+        "appExitCode": null,
+        "appExitSpec": null,
+        "appExitDiagnostics": null,
+        "appExitMessages": {
+            "container": null,
+            "runtime": null,
+            "launcher": null
+        },
+        "appExitTriggerMessage": null,
+        "appExitTriggerTaskRoleName": null,
+        "appExitTriggerTaskIndex": null,
+        "appExitType": null,
+        "virtualCluster": "default"
+    },
+    "taskRoles": {
+        "test_master": {
+            "taskRoleStatus": {
+                "name": "test_master"
+            },
+            "taskStatuses": [
+                {
+                    "taskIndex": 0,
+                    "taskState": "RUNNING",
+                    "containerId": "container_e722_1565658542262_0002_01_000003",
+                    "containerIp": "10.20.35.207",
+                    "containerPorts": {
+                        "master_port": "31099",
+                        "http": "31100",
+                        "ssh": "31101"
+                    },
+                    "containerGpus": 0,
+                    "containerLog": "http://10.20.35.207:8042/node/containerlogs/container_e722_1565658542262_0002_01_000003/admin/",
+                    "containerExitCode": null
+                }
+            ]
+        },
+        "test_worker2": {
+            "taskRoleStatus": {
+                "name": "test_worker2"
+            },
+            "taskStatuses": [
+                {
+                    "taskIndex": 0,
+                    "taskState": "RUNNING",
+                    "containerId": "container_e722_1565658542262_0002_01_000004",
+                    "containerIp": "10.20.35.207",
+                    "containerPorts": {
+                        "worker2_port": "13203",
+                        "http": "13204",
+                        "ssh": "13205"
+                    },
+                    "containerGpus": 0,
+                    "containerLog": "http://10.20.35.207:8042/node/containerlogs/container_e722_1565658542262_0002_01_000004/admin/",
+                    "containerExitCode": null
+                }
+            ]
+        },
+        "test_worker1": {
+            "taskRoleStatus": {
+                "name": "test_worker1"
+            },
+            "taskStatuses": [
+                {
+                    "taskIndex": 0,
+                    "taskState": "RUNNING",
+                    "containerId": "container_e722_1565658542262_0002_01_000005",
+                    "containerIp": "10.20.35.207",
+                    "containerPorts": {
+                        "worker1_port": "14157",
+                        "http": "14158",
+                        "ssh": "14159"
+                    },
+                    "containerGpus": 0,
+                    "containerLog": "http://10.20.35.207:8042/node/containerlogs/container_e722_1565658542262_0002_01_000005/admin/",
+                    "containerExitCode": null
+                }
+            ]
+        },
+        "test_worker3": {
+            "taskRoleStatus": {
+                "name": "test_worker3"
+            },
+            "taskStatuses": [
+                {
+                    "taskIndex": 0,
+                    "taskState": "RUNNING",
+                    "containerId": "container_e722_1565658542262_0002_01_000002",
+                    "containerIp": "10.20.35.207",
+                    "containerPorts": {
+                        "worker3_port": "3348",
+                        "http": "3349",
+                        "ssh": "3350"
+                    },
+                    "containerGpus": 0,
+                    "containerLog": "http://10.20.35.207:8042/node/containerlogs/container_e722_1565658542262_0002_01_000002/admin/",
+                    "containerExitCode": null
+                }
+            ]
+        }
+    }
+}
